@@ -1,0 +1,41 @@
+IDEIAS PARA O FIORENTIS (v2+)
+Inspiradas em outros apps de organização pessoal. Nada disso está implementado —
+é repertório para revisitar depois de usar o app por um tempo e sentir o que
+realmente falta.
+
+ALTO VALOR, BAIXO ESFORÇO
+-------------------------
+- Captura com linguagem natural (Things 3, Todoist)
+  Digitar "reunião amanhã 15h" já parseia data/hora automaticamente,
+  preenchendo prazo/data_evento sem abrir os campos extras.
+  Ataca direto o princípio #1 do brief (captura em segundos).
+
+- Botão "empurrar pra amanhã" direto no card (TickTick, Todoist)
+  Um tap que soma 1 dia ao prazo, sem precisar abrir o modal de edição inteiro.
+  Ótimo pra quem revisa o board todo dia e só quer adiar algumas coisas rápido.
+
+- Drag-and-drop entre colunas (Trello, Linear)
+  Já que a Hoje virou Kanban, mover status arrastando é mais natural
+  que editar o dropdown no modal de edição.
+
+ESTRUTURA QUE PODE CRESCER BEM
+-------------------------------
+- Bloco "Essa noite" separado de "Hoje" (Things 3)
+  Faculdade + trabalho + namoro disputando espaço no mesmo board — separar
+  manhã/tarde de noite pode ajudar a não misturar tudo.
+
+- Subtarefas/checklist dentro de um item (Apple Reminders)
+  Útil pra quebrar uma tarefa grande de trabalho/faculdade sem virar
+  vários itens soltos no board.
+
+- Itens recorrentes (aula toda terça, revisão semanal)
+  Evita recriar manualmente toda semana.
+
+POWER-USER
+----------
+- Command palette / cmd+K (Linear)
+  Abrir captura, buscar item, mudar status — tudo via teclado, sem mouse.
+  Combina bem com "captura em segundos".
+
+- Busca livre na tela Todos
+  Hoje só tem filtro por status; útil quando a lista crescer.

@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:17
+    container_name: fiorentis-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fiorentis_user
+      POSTGRES_PASSWORD: fiorentis_pass
+      POSTGRES_DB: fiorentis_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - fiorentis_pgdata:/var/lib/postgresql/data
+
+volumes:
+  fiorentis_pgdata:
