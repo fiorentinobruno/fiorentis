@@ -1,0 +1,15 @@
+name: Keep Render awake
+
+on:
+  schedule:
+    # 10:55 UTC = 7:55 no horário de Brasília (America/Sao_Paulo, UTC-3)
+    # Acorda o app antes do resumo diário das 8h.
+    - cron: "55 10 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /health
+        run: curl -sf https://fiorentis.onrender.com/health
