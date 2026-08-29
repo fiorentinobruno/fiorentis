@@ -5,60 +5,58 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Hoje — Fiorentis</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/theme.css?v=1787983124" />
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen overflow-x-hidden">
+<body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
 
-  <header class="bg-white border-b border-slate-200 px-4 sm:px-6 py-4 sticky top-0 z-10">
-    <div class="flex items-start justify-between mb-3">
-      <h1 class="text-lg font-semibold">Hoje</h1>
-      <p class="text-sm text-slate-500" id="data-hoje"></p>
-    </div>
-    <nav class="flex gap-2 overflow-x-auto whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap sm:whitespace-normal">
-      <a href="/" class="text-base font-semibold text-white bg-slate-900 rounded-full px-5 py-2">
-        Hoje
-      </a>
-      <a href="/semana" class="text-base font-medium text-slate-600 border border-slate-300 rounded-full px-5 py-2 hover:bg-slate-50">
-        Semana
-      </a>
-      <a href="/calendario" class="text-base font-medium text-slate-600 border border-slate-300 rounded-full px-5 py-2 hover:bg-slate-50">
-        Calendário
-      </a>
-      <a href="/todos" class="text-base font-medium text-slate-600 border border-slate-300 rounded-full px-5 py-2 hover:bg-slate-50">
-        Todos
-      </a>
-    </nav>
-  </header>
+  <div id="header-root"></div>
 
   <main class="max-w-[110rem] mx-auto px-4 pt-6 pb-28">
-    <div id="lista-vazia" class="hidden text-center text-slate-400 py-16">
+    <div class="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-xs text-slate-500">Tenho até:</span>
+        <div id="chips-filtro-tempo" class="flex gap-2 flex-wrap">
+          <button type="button" class="chip" data-valor="15min">15min</button>
+          <button type="button" class="chip" data-valor="30min">30min</button>
+          <button type="button" class="chip" data-valor="1h">1h</button>
+          <button type="button" class="chip" data-valor="2h+">2h+</button>
+        </div>
+      </div>
+      <button type="button" id="btn-fechar-dia"
+        class="text-sm px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">
+        Fechar o dia
+      </button>
+    </div>
+
+    <div id="lista-vazia" class="hidden text-center text-slate-500 py-16">
       Nada pra hoje. Bom sinal ou hora de processar o inbox?
     </div>
 
-    <div class="flex flex-col gap-6 sm:grid sm:grid-cols-4 sm:gap-8 sm:divide-x sm:divide-slate-200">
+    <div class="flex flex-col gap-6 sm:grid sm:grid-cols-4 sm:gap-8 sm:divide-x sm:divide-slate-800">
       <section class="sm:pl-5 sm:first:pl-0">
-        <h2 class="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-          Inbox <span id="contagem-inbox" class="text-xs font-normal text-slate-400"></span>
+        <h2 class="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+          Inbox <span id="contagem-inbox" class="text-xs font-normal text-slate-500"></span>
         </h2>
         <ul id="coluna-inbox" class="space-y-3 min-h-[3rem]"></ul>
       </section>
 
       <section class="sm:pl-5 sm:first:pl-0">
-        <h2 class="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-          A fazer <span id="contagem-a_fazer" class="text-xs font-normal text-slate-400"></span>
+        <h2 class="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+          A fazer <span id="contagem-a_fazer" class="text-xs font-normal text-slate-500"></span>
         </h2>
         <ul id="coluna-a_fazer" class="space-y-3 min-h-[3rem]"></ul>
       </section>
 
       <section class="sm:pl-5 sm:first:pl-0">
-        <h2 class="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-          Em andamento <span id="contagem-em_andamento" class="text-xs font-normal text-slate-400"></span>
+        <h2 class="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+          Em andamento <span id="contagem-em_andamento" class="text-xs font-normal text-slate-500"></span>
         </h2>
         <ul id="coluna-em_andamento" class="space-y-3 min-h-[3rem]"></ul>
       </section>
 
       <section class="sm:pl-5 sm:first:pl-0">
-        <h2 class="text-sm font-semibold text-slate-500 mb-3 flex items-center gap-1.5">
-          Feito <span id="contagem-feito" class="text-xs font-normal text-slate-400"></span>
+        <h2 class="text-sm font-semibold text-slate-400 mb-3 flex items-center gap-1.5">
+          Feito <span id="contagem-feito" class="text-xs font-normal text-slate-500"></span>
         </h2>
         <ul id="coluna-feito" class="space-y-3 min-h-[3rem]"></ul>
       </section>
@@ -67,35 +65,35 @@
 
   <!-- Botão flutuante de captura rápida -->
   <button id="btn-capturar"
-    class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-slate-900 text-white text-3xl leading-none
-           flex items-center justify-center shadow-lg hover:bg-slate-700 active:scale-95 transition">
+    class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-[color:var(--accent)] text-white text-3xl leading-none
+           flex items-center justify-center shadow-lg hover:opacity-90 active:scale-95 transition">
     +
   </button>
 
   <!-- Modal de captura rápida -->
-  <div id="modal-captura" class="hidden fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20">
-    <div class="bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-xl p-4 max-h-[90vh] overflow-y-auto">
+  <div id="modal-captura" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-20">
+    <div class="bg-slate-900 border border-slate-800 shadow-2xl w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto">
       <form id="form-captura">
-        <label class="block text-sm font-medium text-slate-600 mb-1">Novo item</label>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Novo item</label>
         <input id="input-titulo" type="text" required autocomplete="off"
           placeholder="O que você precisa lembrar?"
-          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-slate-900" />
+          class="w-full border border-slate-700 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
 
         <details class="mt-3">
-          <summary class="text-sm text-slate-500 cursor-pointer select-none">+ Adicionar detalhes (opcional)</summary>
+          <summary class="text-sm text-slate-400 cursor-pointer select-none">+ Adicionar detalhes (opcional)</summary>
 
           <div class="mt-3 space-y-3">
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Descrição</label>
+              <label class="block text-xs text-slate-400 mb-1">Descrição</label>
               <textarea id="input-descricao" rows="2"
-                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
+                class="w-full border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"></textarea>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
               <div class="min-w-0">
-                <label class="block text-xs text-slate-500 mb-1">Tipo</label>
+                <label class="block text-xs text-slate-400 mb-1">Tipo</label>
                 <select id="input-tipo"
-                  class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+                  class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                   <option value="">—</option>
                   <option value="tarefa">Tarefa</option>
                   <option value="nota">Nota</option>
@@ -103,9 +101,9 @@
                 </select>
               </div>
               <div class="min-w-0">
-                <label class="block text-xs text-slate-500 mb-1">Área</label>
+                <label class="block text-xs text-slate-400 mb-1">Área</label>
                 <select id="input-area"
-                  class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+                  class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                   <option value="">—</option>
                   <option value="faculdade">Faculdade</option>
                   <option value="trabalho">Trabalho</option>
@@ -118,11 +116,19 @@
               </div>
             </div>
 
+            <div id="campo-input-disciplina" class="hidden">
+              <label class="block text-xs text-slate-400 mb-1">Matéria</label>
+              <select id="input-disciplina"
+                class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
+                <option value="">—</option>
+              </select>
+            </div>
+
             <div class="grid grid-cols-2 gap-2">
               <div class="min-w-0">
-                <label class="block text-xs text-slate-500 mb-1">Prioridade</label>
+                <label class="block text-xs text-slate-400 mb-1">Prioridade</label>
                 <select id="input-prioridade"
-                  class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+                  class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                   <option value="">—</option>
                   <option value="urgente">Urgente</option>
                   <option value="alta">Alta</option>
@@ -130,23 +136,33 @@
                   <option value="baixa">Baixa</option>
                 </select>
               </div>
-              <div class="min-w-0">
-                <label class="block text-xs text-slate-500 mb-1">Prazo</label>
+              <div class="min-w-0" id="campo-input-prazo">
+                <label class="block text-xs text-slate-400 mb-1">Prazo</label>
                 <input id="input-prazo" type="datetime-local"
-                  class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm" />
+                  class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+              </div>
+            </div>
+
+            <div id="campo-input-data-evento">
+              <label class="block text-xs text-slate-400 mb-1">Data do evento</label>
+              <input id="input-data-evento" type="datetime-local"
+                class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+            </div>
+
+            <div id="campo-input-tempo-estimado" class="hidden">
+              <label class="block text-xs text-slate-400 mb-1">Tempo estimado</label>
+              <div id="chips-input-tempo-estimado" class="flex gap-2 flex-wrap">
+                <button type="button" class="chip" data-valor="15min">15min</button>
+                <button type="button" class="chip" data-valor="30min">30min</button>
+                <button type="button" class="chip" data-valor="1h">1h</button>
+                <button type="button" class="chip" data-valor="2h+">2h+</button>
               </div>
             </div>
 
             <div>
-              <label class="block text-xs text-slate-500 mb-1">Data do evento</label>
-              <input id="input-data-evento" type="datetime-local"
-                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm" />
-            </div>
-
-            <div>
-              <label class="block text-xs text-slate-500 mb-1">Lembrete</label>
+              <label class="block text-xs text-slate-400 mb-1">Lembrete</label>
               <select id="input-lembrete"
-                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+                class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                 <option value="">Sem lembrete</option>
                 <option value="10">10 min antes</option>
                 <option value="30">30 min antes</option>
@@ -155,8 +171,8 @@
               </select>
             </div>
 
-            <label class="flex items-center gap-2 text-sm text-slate-600">
-              <input id="input-foco-hoje" type="checkbox" class="w-4 h-4 accent-slate-900" />
+            <label class="flex items-center gap-2 text-sm text-slate-300">
+              <input id="input-foco-hoje" type="checkbox" class="w-4 h-4 accent-[color:var(--accent)]" />
               Focar hoje
             </label>
           </div>
@@ -164,33 +180,33 @@
 
         <div class="flex gap-2 mt-4">
           <button type="button" id="btn-cancelar"
-            class="flex-1 py-2 rounded-lg border border-slate-300 text-slate-600">Cancelar</button>
+            class="flex-1 py-2 rounded-lg border border-slate-700 text-slate-300">Cancelar</button>
           <button type="submit"
-            class="flex-1 py-2 rounded-lg bg-slate-900 text-white font-medium">Salvar</button>
+            class="flex-1 py-2 rounded-lg bg-[color:var(--accent)] text-white font-medium">Salvar</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- Modal de edição -->
-  <div id="modal-editar" class="hidden fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-20">
-    <div class="bg-white w-full sm:max-w-sm sm:rounded-xl rounded-t-xl p-4 max-h-[90vh] overflow-y-auto">
+  <div id="modal-editar" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-20">
+    <div class="bg-slate-900 border border-slate-800 shadow-2xl w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto">
       <form id="form-editar">
-        <label class="block text-sm font-medium text-slate-600 mb-1">Editar item</label>
+        <label class="block text-sm font-medium text-slate-300 mb-1">Editar item</label>
         <input id="edit-titulo" type="text" required autocomplete="off"
-          class="w-full border border-slate-300 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-slate-900" />
+          class="w-full border border-slate-700 rounded-lg px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
 
         <div class="mt-3 space-y-3">
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Descrição</label>
+            <label class="block text-xs text-slate-400 mb-1">Descrição</label>
             <textarea id="edit-descricao" rows="2"
-              class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"></textarea>
+              class="w-full border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]"></textarea>
           </div>
 
           <div class="grid grid-cols-2 gap-2">
             <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Tipo</label>
-              <select id="edit-tipo" class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+              <label class="block text-xs text-slate-400 mb-1">Tipo</label>
+              <select id="edit-tipo" class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                 <option value="">—</option>
                 <option value="tarefa">Tarefa</option>
                 <option value="nota">Nota</option>
@@ -198,8 +214,8 @@
               </select>
             </div>
             <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Área</label>
-              <select id="edit-area" class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+              <label class="block text-xs text-slate-400 mb-1">Área</label>
+              <select id="edit-area" class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                 <option value="">—</option>
                 <option value="faculdade">Faculdade</option>
                 <option value="trabalho">Trabalho</option>
@@ -212,10 +228,17 @@
             </div>
           </div>
 
+          <div id="campo-edit-disciplina" class="hidden">
+            <label class="block text-xs text-slate-400 mb-1">Matéria</label>
+            <select id="edit-disciplina" class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
+              <option value="">—</option>
+            </select>
+          </div>
+
           <div class="grid grid-cols-2 gap-2">
             <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Prioridade</label>
-              <select id="edit-prioridade" class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+              <label class="block text-xs text-slate-400 mb-1">Prioridade</label>
+              <select id="edit-prioridade" class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                 <option value="">—</option>
                 <option value="urgente">Urgente</option>
                 <option value="alta">Alta</option>
@@ -224,8 +247,8 @@
               </select>
             </div>
             <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Status</label>
-              <select id="edit-status" class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+              <label class="block text-xs text-slate-400 mb-1">Status</label>
+              <select id="edit-status" class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
                 <option value="inbox">Inbox</option>
                 <option value="a_fazer">A fazer</option>
                 <option value="em_andamento">Em andamento</option>
@@ -236,22 +259,32 @@
           </div>
 
           <div class="grid grid-cols-2 gap-2">
-            <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Prazo</label>
+            <div class="min-w-0" id="campo-edit-prazo">
+              <label class="block text-xs text-slate-400 mb-1">Prazo</label>
               <input id="edit-prazo" type="datetime-local"
-                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm" />
+                class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm" />
             </div>
-            <div class="min-w-0">
-              <label class="block text-xs text-slate-500 mb-1">Data do evento</label>
+            <div class="min-w-0" id="campo-edit-data-evento">
+              <label class="block text-xs text-slate-400 mb-1">Data do evento</label>
               <input id="edit-data-evento" type="datetime-local"
-                class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm" />
+                class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm" />
+            </div>
+          </div>
+
+          <div id="campo-edit-tempo-estimado" class="hidden">
+            <label class="block text-xs text-slate-400 mb-1">Tempo estimado</label>
+            <div id="chips-edit-tempo-estimado" class="flex gap-2 flex-wrap">
+              <button type="button" class="chip" data-valor="15min">15min</button>
+              <button type="button" class="chip" data-valor="30min">30min</button>
+              <button type="button" class="chip" data-valor="1h">1h</button>
+              <button type="button" class="chip" data-valor="2h+">2h+</button>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs text-slate-500 mb-1">Lembrete</label>
+            <label class="block text-xs text-slate-400 mb-1">Lembrete</label>
             <select id="edit-lembrete"
-              class="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm">
+              class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm">
               <option value="">Sem lembrete</option>
               <option value="10">10 min antes</option>
               <option value="30">30 min antes</option>
@@ -260,10 +293,20 @@
             </select>
           </div>
 
-          <label class="flex items-center gap-2 text-sm text-slate-600">
-            <input id="edit-foco-hoje" type="checkbox" class="w-4 h-4 accent-slate-900" />
+          <label class="flex items-center gap-2 text-sm text-slate-300">
+            <input id="edit-foco-hoje" type="checkbox" class="w-4 h-4 accent-[color:var(--accent)]" />
             Focar hoje
           </label>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Checklist</label>
+            <ul id="edit-checklist-lista" class="space-y-1.5 mb-2"></ul>
+            <div id="form-edit-checklist" class="flex gap-2">
+              <input id="edit-checklist-input" type="text" autocomplete="off" placeholder="Adicionar subtarefa"
+                class="flex-1 border border-slate-700 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
+              <button type="button" id="btn-edit-checklist-add" class="px-3 py-1.5 rounded-lg bg-[color:var(--accent)] text-white text-sm font-medium">+</button>
+            </div>
+          </div>
         </div>
 
         <div class="flex gap-2 mt-4">
@@ -271,22 +314,59 @@
             class="text-sm text-red-600 px-2">Excluir</button>
           <div class="min-w-0"></div>
           <button type="button" id="btn-editar-cancelar"
-            class="py-2 px-4 rounded-lg border border-slate-300 text-slate-600">Cancelar</button>
+            class="py-2 px-4 rounded-lg border border-slate-700 text-slate-300">Cancelar</button>
           <button type="submit"
-            class="py-2 px-4 rounded-lg bg-slate-900 text-white font-medium">Salvar</button>
+            class="py-2 px-4 rounded-lg bg-[color:var(--accent)] text-white font-medium">Salvar</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- Modal de visualização rápida -->
+  <div id="modal-visualizar" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-20">
+    <div class="bg-slate-900 border border-slate-800 shadow-2xl w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 max-h-[80vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <h3 id="visualizar-titulo" class="text-base font-semibold text-slate-100 break-words"></h3>
+        <div class="flex items-center gap-1 shrink-0">
+          <button type="button" id="btn-visualizar-editar" class="icon-btn" title="Editar">✎</button>
+          <button type="button" id="btn-visualizar-fechar" class="icon-btn" title="Fechar">×</button>
+        </div>
+      </div>
+      <p id="visualizar-descricao" class="text-sm text-slate-300 whitespace-pre-wrap break-words"></p>
+    </div>
+  </div>
+
+  <!-- Modal de fechar o dia -->
+  <div id="modal-fechar-dia" class="hidden fixed inset-0 bg-black/60 flex items-end sm:items-center justify-center z-20">
+    <div class="bg-slate-900 border border-slate-800 shadow-2xl w-full sm:max-w-sm sm:rounded-2xl rounded-t-2xl p-5 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-base font-semibold text-slate-100 mb-1">Fechar o dia</h3>
+      <p id="fechar-dia-resumo" class="text-sm text-slate-400 mb-4"></p>
+
+      <div id="fechar-dia-pendentes" class="space-y-2 mb-4"></div>
+
+      <p class="text-xs text-slate-500 mb-4">
+        Pendências sem reagendamento manual vão pra amanhã.
+      </p>
+
+      <div class="flex gap-2">
+        <button type="button" id="btn-fechar-dia-cancelar"
+          class="flex-1 py-2 rounded-lg border border-slate-700 text-slate-300">Cancelar</button>
+        <button type="button" id="btn-fechar-dia-confirmar"
+          class="flex-1 py-2 rounded-lg bg-[color:var(--accent)] text-white font-medium">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast de confirmação -->
   <div id="toast"
-    class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
+    class="hidden fixed bottom-24 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
     Item salvo
   </div>
 
-  <script src="/static/shared.js"></script>
-  <script src="/static/notifications.js"></script>
-  <script src="/static/app.js"></script>
+  <script src="/static/header.js?v=1787983124"></script>
+  <script>initHeader({ menu: "tarefas", pagina: "hoje" });</script>
+  <script src="/static/shared.js?v=1787983124"></script>
+  <script src="/static/notifications.js?v=1787983124"></script>
+  <script src="/static/app.js?v=1787983124"></script>
 </body>
 </html>

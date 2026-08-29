@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -10,13 +11,21 @@ from app.services import push_service
 
 logger = logging.getLogger(__name__)
 
-HORA_RESUMO_DIARIO = 8  # 8h da manhã, horário local do servidor
+FUSO_HORARIO = ZoneInfo("America/Sao_Paulo")
+HORA_RESUMO_DIARIO = 8  # 8h da manhã, horário de Brasília
+
+
+def agora_local() -> datetime:
+    """'Agora' em horário de Brasília, naive — pra comparar com os datetimes
+    do banco, que são gravados sem timezone assumindo o horário local do usuário.
+    """
+    return datetime.now(FUSO_HORARIO).replace(tzinfo=None)
 
 
 def verificar_lembretes() -> None:
     db = SessionLocal()
     try:
-        agora = datetime.now()
+        agora = agora_local()
         itens = (
             db.query(Item)
             .filter(
@@ -50,12 +59,16 @@ def verificar_lembretes() -> None:
 def verificar_resumo_diario() -> None:
     db = SessionLocal()
     try:
-        agora = datetime.now()
+        agora = agora_local()
         if agora.hour != HORA_RESUMO_DIARIO:
             return
 
         hoje = agora.date()
-        ja_enviado = db.query(DailyPushLog).filter(DailyPushLog.dia == hoje).first()
+        ja_enviado = (
+            db.query(DailyPushLog)
+            .filter(DailyPushLog.dia == hoje, DailyPushLog.tipo == "resumo_diario")
+            .first()
+        )
         if ja_enviado:
             return
 
@@ -80,7 +93,36 @@ def verificar_resumo_diario() -> None:
             corpo = f"{len(itens)} item{'s' if len(itens) != 1 else ''} pra hoje"
             push_service.enviar_push_a_todos(db, titulo="Resumo do dia", corpo=corpo, url="/")
 
-        db.add(DailyPushLog(dia=hoje))
+        db.add(DailyPushLog(dia=hoje, tipo="resumo_diario"))
+        db.commit()
+    finally:
+        db.close()
+
+
+def verificar_fechamento_dia() -> None:
+    db = SessionLocal()
+    try:
+        agora = agora_local()
+        if agora.hour != 23 or agora.minute < 50:
+            return
+
+        hoje = agora.date()
+        ja_enviado = (
+            db.query(DailyPushLog)
+            .filter(DailyPushLog.dia == hoje, DailyPushLog.tipo == "fechamento_dia")
+            .first()
+        )
+        if ja_enviado:
+            return
+
+        push_service.enviar_push_a_todos(
+            db,
+            titulo="Fechar o dia",
+            corpo="Dá uma olhada no que ficou pendente antes de virar o dia.",
+            url="/",
+        )
+
+        db.add(DailyPushLog(dia=hoje, tipo="fechamento_dia"))
         db.commit()
     finally:
         db.close()
@@ -90,5 +132,6 @@ def iniciar_scheduler() -> BackgroundScheduler:
     scheduler = BackgroundScheduler()
     scheduler.add_job(verificar_lembretes, "interval", minutes=1, id="lembretes")
     scheduler.add_job(verificar_resumo_diario, "interval", minutes=1, id="resumo_diario")
+    scheduler.add_job(verificar_fechamento_dia, "interval", minutes=1, id="fechamento_dia")
     scheduler.start()
     return scheduler

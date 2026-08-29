@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dashboard — Fiorentis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/static/theme.css?v=1787983124" />
+</head>
+<body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
+
+  <div id="header-root"></div>
+
+  <main class="w-full max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-10 pt-6 pb-16 space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-lg font-semibold text-slate-100">Dashboard</h1>
+      <a href="/dashboard/gerenciar" class="icon-btn text-lg" title="Gerenciar">⚙️</a>
+    </div>
+
+    <!-- Resumo -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <h2 class="text-sm font-semibold text-slate-100 mb-3">Resumo</h2>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <p class="text-xs text-slate-500 mb-2">Hoje</p>
+          <div id="resumo-hoje" class="space-y-1 text-sm text-slate-300"></div>
+        </div>
+        <div>
+          <p class="text-xs text-slate-500 mb-2">Essa semana</p>
+          <div id="resumo-semana" class="space-y-1 text-sm text-slate-300"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Coluna esquerda: gráfico + checklist -->
+      <div class="flex flex-col gap-4">
+        <!-- Gráfico -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-100">Progresso da checklist</h2>
+            <div class="flex items-center gap-1 text-xs">
+              <button data-dias="7" class="btn-periodo px-2 py-1 rounded-md border border-slate-700">7d</button>
+              <button data-dias="15" class="btn-periodo px-2 py-1 rounded-md border border-slate-700">15d</button>
+              <button data-dias="30" class="btn-periodo px-2 py-1 rounded-md border border-slate-700">30d</button>
+            </div>
+          </div>
+          <canvas id="grafico-checklist" height="90"></canvas>
+        </section>
+
+        <!-- Checklist semanal -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-100">Checklist semanal</h2>
+            <div class="flex items-center gap-2 text-sm">
+              <button id="btn-semana-anterior" class="icon-btn">←</button>
+              <span id="semana-label" class="text-slate-400 text-xs"></span>
+              <button id="btn-semana-proxima" class="icon-btn">→</button>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[420px] table-fixed text-sm border-separate" style="border-spacing: 0 0.35rem;">
+              <thead>
+                <tr id="checklist-thead"></tr>
+              </thead>
+              <tbody id="checklist-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- Coluna direita: agenda + frase -->
+      <div class="flex flex-col gap-4">
+        <!-- Agenda diária -->
+        <section class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex-1">
+          <h2 class="text-sm font-semibold text-slate-100 mb-3">Agenda de hoje</h2>
+          <ul id="lista-agenda" class="space-y-2"></ul>
+          <p id="agenda-vazia" class="hidden text-sm text-slate-500">Nenhuma tarefa prioritária para hoje.</p>
+        </section>
+
+        <!-- Frase do dia -->
+        <div id="secao-frase" class="hidden rounded-xl px-6 py-5 border-2" style="border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent);">
+          <p class="text-[0.65rem] uppercase tracking-widest text-[color:var(--accent-soft)] mb-2">Frase do dia</p>
+          <p id="frase-texto" class="text-base leading-relaxed font-medium text-slate-100"></p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal de tarefa da agenda -->
+  <div id="modal-agenda" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-40 px-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 max-w-md w-full">
+      <h3 id="modal-agenda-titulo" class="text-base font-semibold text-slate-100 mb-2"></h3>
+      <p id="modal-agenda-descricao" class="text-sm text-slate-400 mb-4"></p>
+      <div class="flex justify-end gap-2">
+        <button id="btn-modal-agenda-fechar" class="px-3 py-2 rounded-lg border border-slate-700 text-sm">Fechar</button>
+        <button id="btn-modal-agenda-concluir" class="px-3 py-2 rounded-lg bg-[color:var(--accent)] text-white text-sm font-medium">Concluir</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"
+    class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
+  </div>
+
+  <script src="/static/header.js?v=1787983124"></script>
+  <script>initHeader({ menu: "pessoal", pagina: "dashboard" });</script>
+  <script src="/static/shared.js?v=1787983124"></script>
+  <script src="/static/dashboard.js?v=1787983124"></script>
+</body>
+</html>

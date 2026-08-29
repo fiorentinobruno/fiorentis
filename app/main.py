@@ -7,7 +7,11 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import get_db
+from app.routers.checklist_router import router as checklist_router
+from app.routers.dashboard_router import router as dashboard_router
+from app.routers.disciplina_router import router as disciplina_router
 from app.routers.item_router import router as item_router
+from app.routers.projeto_router import router as projeto_router
 from app.routers.push_router import router as push_router
 from app.services.scheduler import iniciar_scheduler
 
@@ -17,6 +21,10 @@ app = FastAPI(title="Fiorentis")
 
 app.include_router(item_router)
 app.include_router(push_router)
+app.include_router(disciplina_router)
+app.include_router(checklist_router)
+app.include_router(dashboard_router)
+app.include_router(projeto_router)
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
@@ -53,6 +61,31 @@ def semana_page() -> FileResponse:
 @app.get("/calendario")
 def calendario_page() -> FileResponse:
     return FileResponse(STATIC_DIR / "calendario.html")
+
+
+@app.get("/faculdade")
+def faculdade_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "faculdade.html")
+
+
+@app.get("/pessoal")
+def pessoal_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "pessoal.html")
+
+
+@app.get("/dashboard")
+def dashboard_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "dashboard.html")
+
+
+@app.get("/dashboard/gerenciar")
+def dashboard_gerenciar_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "dashboard-gerenciar.html")
+
+
+@app.get("/estudos")
+def estudos_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "estudos.html")
 
 
 @app.get("/health")

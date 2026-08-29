@@ -1,7 +1,7 @@
 const COLUNAS = ["inbox", "a_fazer", "em_andamento", "feito"];
 
 const vaziaEl = document.getElementById("lista-vazia");
-const contagemEl = document.getElementById("contagem");
+const contagemEl = document.getElementById("header-info");
 const toast = document.getElementById("toast");
 
 let toastTimeout = null;
@@ -23,6 +23,7 @@ async function marcarFeito(id, feito) {
 }
 
 const abrirEdicao = setupEdicao(carregarSemana, mostrarToast);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao);
 setupCaptura(carregarSemana, mostrarToast);
 
 async function carregarSemana() {
@@ -41,7 +42,7 @@ async function carregarSemana() {
     contagemColunaEl.textContent = itensDaColuna.length > 0 ? itensDaColuna.length : "";
 
     for (const item of itensDaColuna) {
-      colunaEl.appendChild(renderItem(item, marcarFeito, abrirEdicao));
+      colunaEl.appendChild(renderItem(item, marcarFeito, abrirEdicao, abrirVisualizacao));
     }
   }
 }

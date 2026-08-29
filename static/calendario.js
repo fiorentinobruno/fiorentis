@@ -1,6 +1,6 @@
 const gradeEl = document.getElementById("grade-calendario");
 const tituloMesEl = document.getElementById("titulo-mes");
-const contagemEl = document.getElementById("contagem");
+const contagemEl = document.getElementById("header-info");
 const btnMesHoje = document.getElementById("btn-mes-hoje");
 const btnMesAnterior = document.getElementById("btn-mes-anterior");
 const btnMesProximo = document.getElementById("btn-mes-proximo");
@@ -37,6 +37,7 @@ const abrirEdicao = setupEdicao(async () => {
   await carregarMes();
   if (!modalDia.classList.contains("hidden") && diaSelecionado) abrirDia(diaSelecionado);
 }, mostrarToast);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao);
 setupCaptura(carregarMes, mostrarToast);
 
 const hoje = new Date();
@@ -44,6 +45,13 @@ let mesAtual = hoje.getMonth();
 let anoAtual = hoje.getFullYear();
 let itensPorDia = new Map();
 let diaSelecionado = null;
+let disciplinasPorId = new Map();
+
+async function carregarDisciplinas() {
+  const resp = await fetch("/disciplinas");
+  const disciplinas = await resp.json();
+  disciplinasPorId = new Map(disciplinas.map((d) => [d.id, d.nome]));
+}
 
 function chaveDia(data) {
   const d = new Date(data);
@@ -68,6 +76,8 @@ async function carregarMes() {
     if (item.status === "arquivado") continue;
     const data = item.data_evento || item.prazo;
     if (!data) continue;
+
+    if (item.disciplina_id) item.disciplina_nome = disciplinasPorId.get(item.disciplina_id) || null;
 
     const d = new Date(data);
     const chave = chaveDia(data);
@@ -111,14 +121,14 @@ function renderizarGrade() {
     celula.type = "button";
     celula.className = [
       "min-h-[92px] sm:min-h-[120px] rounded-xl border p-2 text-left flex flex-col gap-1.5 transition",
-      foraDoMes ? "border-slate-100 bg-slate-50 text-slate-300" : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm",
+      foraDoMes ? "border-slate-800 bg-slate-800 text-slate-600" : "border-slate-800 bg-slate-900 hover:border-slate-700 hover:shadow-sm",
     ].join(" ");
 
     const numero = document.createElement("span");
     numero.textContent = dataCelula.getDate();
     numero.className = [
       "text-sm font-medium w-6 h-6 flex items-center justify-center rounded-full",
-      ehHoje ? "bg-slate-900 text-white" : foraDoMes ? "text-slate-300" : "text-slate-700",
+      ehHoje ? "bg-[color:var(--accent)] text-white" : foraDoMes ? "text-slate-600" : "text-slate-200",
     ].join(" ");
     celula.appendChild(numero);
 
@@ -131,11 +141,11 @@ function renderizarGrade() {
 
       for (const item of itensFaculdade.slice(0, 3)) {
         const rotulo = document.createElement("span");
-        rotulo.textContent = item.titulo;
-        rotulo.title = item.titulo;
+        rotulo.textContent = item.disciplina_nome ? `${item.disciplina_nome}: ${item.titulo}` : item.titulo;
+        rotulo.title = rotulo.textContent;
         const concluido = item.status === "feito";
         rotulo.className = [
-          "text-[11px] leading-tight font-medium text-sky-600 bg-sky-50 rounded px-1 py-0.5 truncate",
+          "text-[11px] leading-tight font-medium text-sky-300 bg-sky-950/50 rounded px-1 py-0.5 truncate",
           concluido ? "line-through opacity-50" : "",
         ].join(" ");
         listaFaculdade.appendChild(rotulo);
@@ -168,7 +178,7 @@ function renderizarGrade() {
       if (itensRestantes.length > visiveis.length) {
         const extra = document.createElement("span");
         extra.textContent = `+${itensRestantes.length - visiveis.length}`;
-        extra.className = "text-[10px] text-slate-400 leading-none self-center";
+        extra.className = "text-[10px] text-slate-500 leading-none self-center";
         dots.appendChild(extra);
       }
 
@@ -196,11 +206,11 @@ function abrirDia(data) {
   if (itensDoDia.length === 0) {
     const vazio = document.createElement("li");
     vazio.textContent = "Nada nesse dia.";
-    vazio.className = "text-sm text-slate-400 text-center py-6";
+    vazio.className = "text-sm text-slate-500 text-center py-6";
     modalDiaLista.appendChild(vazio);
   } else {
     for (const item of itensDoDia) {
-      modalDiaLista.appendChild(renderItem(item, marcarFeito, abrirEdicao));
+      modalDiaLista.appendChild(renderItem(item, marcarFeito, abrirEdicao, abrirVisualizacao));
     }
   }
 
@@ -242,4 +252,4 @@ btnMesHoje.addEventListener("click", () => {
   carregarMes();
 });
 
-carregarMes();
+carregarDisciplinas().then(carregarMes);

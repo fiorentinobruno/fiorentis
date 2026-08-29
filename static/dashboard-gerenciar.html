@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gerenciar Dashboard — Fiorentis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/theme.css?v=1787983124" />
+</head>
+<body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
+
+  <div id="header-root"></div>
+
+  <main class="max-w-2xl mx-auto px-4 pt-6 pb-16 space-y-6">
+    <div class="flex items-center gap-3">
+      <a href="/dashboard" class="text-sm text-slate-400 hover:text-slate-200">← Voltar ao Dashboard</a>
+    </div>
+    <h1 class="text-lg font-semibold text-slate-100">Gerenciar Dashboard</h1>
+
+    <!-- Itens da checklist -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <h2 class="text-sm font-semibold text-slate-100 mb-3">Itens da checklist diária</h2>
+      <ul id="lista-checklist-items" class="space-y-2 mb-3"></ul>
+      <form id="form-novo-item" class="flex gap-2">
+        <input type="text" required autocomplete="off" placeholder="Novo item"
+          class="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
+        <button type="submit" class="px-3 py-2 rounded-lg bg-[color:var(--accent)] text-white text-sm font-medium">+</button>
+      </form>
+    </section>
+
+    <!-- Frases -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+      <h2 class="text-sm font-semibold text-slate-100 mb-3">Frase de amanhã</h2>
+      <form id="form-frase-amanha" class="flex gap-2 mb-4">
+        <input id="input-frase-amanha" type="text" required autocomplete="off" placeholder="Escreva a frase para amanhã"
+          class="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
+        <button type="submit" class="px-3 py-2 rounded-lg bg-[color:var(--accent)] text-white text-sm font-medium">Salvar</button>
+      </form>
+
+      <h2 class="text-sm font-semibold text-slate-100 mb-3">Frases de fallback</h2>
+      <ul id="lista-fallback-quotes" class="space-y-2 mb-3"></ul>
+      <form id="form-nova-fallback" class="flex gap-2">
+        <input type="text" required autocomplete="off" placeholder="Nova frase de fallback"
+          class="flex-1 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[color:var(--accent)]" />
+        <button type="submit" class="px-3 py-2 rounded-lg bg-[color:var(--accent)] text-white text-sm font-medium">+</button>
+      </form>
+    </section>
+  </main>
+
+  <div id="toast"
+    class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
+  </div>
+
+  <script src="/static/header.js?v=1787983124"></script>
+  <script>initHeader({ menu: "pessoal", pagina: "dashboard" });</script>
+  <script src="/static/dashboard-gerenciar.js?v=1787983124"></script>
+</body>
+</html>

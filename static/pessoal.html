@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pessoal — Fiorentis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/theme.css?v=1787983124" />
+</head>
+<body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
+
+  <div id="header-root"></div>
+
+  <main class="max-w-2xl mx-auto px-4 pt-6 pb-16">
+    <h1 class="text-lg font-semibold text-slate-100 mb-4">Lista de compras</h1>
+
+    <div class="space-y-3" id="secoes-compras">
+      <!-- seções (mercado/farmácia/internet) são geradas pelo pessoal.js -->
+    </div>
+  </main>
+
+  <!-- Toast de confirmação -->
+  <div id="toast"
+    class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
+  </div>
+
+  <script src="/static/header.js?v=1787983124"></script>
+  <script>initHeader({ menu: "pessoal", pagina: "compras" });</script>
+  <script src="/static/pessoal.js?v=1787983124"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --accent: #561394;
+  --accent-soft: #b794f6; /* versão clara do roxo, pra texto sobre fundo escuro */
+}
+
+.logo-fiorentis {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+body {
+  font-feature-settings: "cv11", "ss01";
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Scrollbar — discreta, no tom do tema */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(51 65 85); /* slate-700 */
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(71 85 105); /* slate-600 */
+  background-clip: padding-box;
+}
+
+input,
+select,
+textarea {
+  background-color: rgb(30 41 59); /* slate-800 */
+  color: rgb(241 245 249); /* slate-100 */
+  color-scheme: dark;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgb(100 116 139); /* slate-500 */
+}
+
+/* Checkbox estilizado — quadrado arredondado, some com o fundo cinza padrão do navegador */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: rgb(30 41 59); /* slate-800 */
+  border: 1.5px solid rgb(71 85 105); /* slate-600 */
+  border-radius: 6px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+input[type="checkbox"]:hover {
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 32%;
+  height: 55%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-right: 2px solid white;
+  border-bottom: 2px solid white;
+}
+
+/* Botões de ícone (editar, excluir, fechar, etc) — alvo circular consistente */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  color: rgb(100 116 139); /* slate-500 */
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background-color: rgb(30 41 59); /* slate-800 */
+  color: rgb(226 232 240); /* slate-200 */
+}
+.icon-btn.icon-btn-danger:hover {
+  background-color: rgb(69 10 10 / 0.5); /* red-950/50 */
+  color: rgb(252 165 165); /* red-300 */
+}
+
+/* Cards e superfícies — leve elevação/hover consistente onde usado */
+.surface-card {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Chips de seleção única (ex: tempo estimado) */
+.chip {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  border: 1px solid rgb(71 85 105); /* slate-600 */
+  color: rgb(148 163 184); /* slate-400 */
+  background-color: rgb(30 41 59); /* slate-800 */
+  transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.chip:hover {
+  border-color: var(--accent);
+}
+.chip.chip-selecionado {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}

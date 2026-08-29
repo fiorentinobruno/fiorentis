@@ -34,8 +34,8 @@ btnNotificacoes.id = "btn-notificacoes";
 btnNotificacoes.type = "button";
 btnNotificacoes.title = "Notificações";
 btnNotificacoes.className =
-  "fixed bottom-6 left-6 w-14 h-14 rounded-full bg-white border border-slate-300 text-xl leading-none " +
-  "flex items-center justify-center shadow-lg hover:bg-slate-50 active:scale-95 transition z-10";
+  "fixed bottom-6 left-6 w-14 h-14 rounded-full bg-slate-900 border border-slate-700 text-xl leading-none " +
+  "flex items-center justify-center shadow-lg hover:bg-slate-800 active:scale-95 transition z-10";
 btnNotificacoes.textContent = "🔔";
 document.body.appendChild(btnNotificacoes);
 
@@ -48,7 +48,7 @@ function atualizarEstadoBotao() {
   }
 
   if (Notification.permission === "granted") {
-    btnNotificacoes.classList.add("bg-slate-900", "text-white", "border-slate-900");
+    btnNotificacoes.classList.add("bg-[color:var(--accent)]", "text-white", "border-[color:var(--accent)]");
     btnNotificacoes.title = "Notificações ativadas";
   } else if (Notification.permission === "denied") {
     btnNotificacoes.classList.add("opacity-40");
@@ -91,7 +91,7 @@ async function ativarNotificacoes() {
     body: JSON.stringify(subscription.toJSON()),
   });
 
-  btnNotificacoes.classList.add("bg-slate-900", "text-white", "border-slate-900");
+  btnNotificacoes.classList.add("bg-[color:var(--accent)]", "text-white", "border-[color:var(--accent)]");
 }
 
 btnNotificacoes.addEventListener("click", ativarNotificacoes);

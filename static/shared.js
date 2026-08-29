@@ -10,23 +10,23 @@ const AREA_COR = {
 
 const PRIORIDADE_COR = {
   urgente: "bg-purple-600 text-white",
-  alta: "bg-red-100 text-red-700",
-  media: "bg-amber-100 text-amber-700",
-  baixa: "bg-slate-100 text-slate-600",
+  alta: "bg-red-900/70 text-red-300",
+  media: "bg-amber-900/60 text-amber-300",
+  baixa: "bg-slate-800 text-slate-300",
 };
 
 const PRIORIDADE_COR_FUNDO = {
-  urgente: "bg-purple-200",
-  alta: "bg-red-200",
-  media: "bg-[#fdecb0]",
-  baixa: "bg-slate-200",
+  urgente: "bg-purple-950/50",
+  alta: "bg-red-950/40",
+  media: "bg-amber-950/40",
+  baixa: "bg-slate-800",
 };
 
 const PRIORIDADE_DOT = {
   urgente: "bg-purple-600",
   alta: "bg-red-500",
   media: "bg-amber-500",
-  baixa: "bg-slate-400",
+  baixa: "bg-slate-500",
 };
 const PRIORIDADE_DOT_PADRAO = "bg-sky-400";
 
@@ -37,6 +37,15 @@ const STATUS_ROTULO = {
   feito: "Feito",
   arquivado: "Arquivado",
 };
+
+const TEMPO_ESTIMADO_ROTULO = {
+  "15min": "15min",
+  "30min": "30min",
+  "1h": "1h",
+  "2h+": "2h+",
+};
+
+const TEMPO_ESTIMADO_ORDEM = ["15min", "30min", "1h", "2h+"];
 
 function formatarData(data) {
   const d = new Date(data);
@@ -56,19 +65,28 @@ function formatarPrazo(item) {
  * onToggleFeito(id, feito) é chamado ao marcar/desmarcar o checkbox.
  * onEdit(item) é chamado ao clicar no botão de editar.
  */
-function renderItem(item, onToggleFeito, onEdit) {
+function renderItem(item, onToggleFeito, onEdit, onView) {
   const li = document.createElement("li");
   const corArea = AREA_COR[item.area] || "border-l-slate-300";
   const feito = item.status === "feito";
 
-  let corFundo = "bg-white";
+  let corFundo = "bg-slate-900";
   if (feito) {
-    corFundo = "bg-emerald-200";
+    corFundo = "bg-emerald-950/30";
   } else if (item.prioridade) {
     corFundo = PRIORIDADE_COR_FUNDO[item.prioridade];
   }
 
-  li.className = `rounded-lg border border-slate-200 border-l-4 ${corArea} p-4 flex items-start gap-3 ${corFundo}`;
+  li.className = `surface-card rounded-xl border border-slate-800 border-l-4 ${corArea} p-4 flex items-start gap-3 ${corFundo} hover:border-slate-700 ${
+    onView ? "cursor-pointer" : ""
+  }`;
+
+  if (onView) {
+    li.addEventListener("click", (e) => {
+      if (e.target.closest("button") || e.target.closest('input[type="checkbox"]')) return;
+      onView(item);
+    });
+  }
 
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
@@ -91,7 +109,7 @@ function renderItem(item, onToggleFeito, onEdit) {
 
   const titulo = document.createElement("p");
   titulo.textContent = item.titulo;
-  titulo.className = `text-sm font-medium break-words ${feito ? "line-through text-slate-400" : ""}`;
+  titulo.className = `text-sm font-medium break-words ${feito ? "line-through text-slate-500" : "text-slate-100"}`;
   linhaTitulo.appendChild(titulo);
 
   corpo.appendChild(linhaTitulo);
@@ -99,7 +117,7 @@ function renderItem(item, onToggleFeito, onEdit) {
   if (item.descricao) {
     const desc = document.createElement("p");
     desc.textContent = item.descricao;
-    desc.className = "text-xs text-slate-400 mt-1 break-words";
+    desc.className = "text-xs text-slate-500 mt-1 break-words";
     corpo.appendChild(desc);
   }
 
@@ -109,8 +127,15 @@ function renderItem(item, onToggleFeito, onEdit) {
   if (item.area) {
     const areaBadge = document.createElement("span");
     areaBadge.textContent = item.area.replace("_", " ");
-    areaBadge.className = "text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500";
+    areaBadge.className = "text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400";
     linha2.appendChild(areaBadge);
+  }
+
+  if (item.disciplina_nome) {
+    const materiaBadge = document.createElement("span");
+    materiaBadge.textContent = item.disciplina_nome;
+    materiaBadge.className = "text-xs px-2 py-0.5 rounded-full bg-sky-950/50 text-sky-300";
+    linha2.appendChild(materiaBadge);
   }
 
   if (item.prioridade) {
@@ -118,6 +143,20 @@ function renderItem(item, onToggleFeito, onEdit) {
     badge.textContent = item.prioridade;
     badge.className = `text-xs px-2 py-0.5 rounded-full font-medium ${PRIORIDADE_COR[item.prioridade]}`;
     linha2.appendChild(badge);
+  }
+
+  if (item.tempo_estimado) {
+    const tempoBadge = document.createElement("span");
+    tempoBadge.textContent = `⏱ ${TEMPO_ESTIMADO_ROTULO[item.tempo_estimado] || item.tempo_estimado}`;
+    tempoBadge.className = "text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400";
+    linha2.appendChild(tempoBadge);
+  }
+
+  if (item.checklist_total > 0) {
+    const checklistBadge = document.createElement("span");
+    checklistBadge.textContent = `☑ ${item.checklist_concluidos}/${item.checklist_total}`;
+    checklistBadge.className = "text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400";
+    linha2.appendChild(checklistBadge);
   }
 
   if (item.lembrete_minutos && !feito) {
@@ -138,7 +177,7 @@ function renderItem(item, onToggleFeito, onEdit) {
     if (prazoTexto) {
       const prazo = document.createElement("span");
       prazo.textContent = prazoTexto;
-      prazo.className = "text-xs text-slate-400";
+      prazo.className = "text-xs text-slate-500";
       linha2.appendChild(prazo);
     }
   }
@@ -153,7 +192,7 @@ function renderItem(item, onToggleFeito, onEdit) {
     btnEditar.type = "button";
     btnEditar.textContent = "✎";
     btnEditar.title = "Editar";
-    btnEditar.className = "text-slate-400 hover:text-slate-700 text-base leading-none px-1 shrink-0";
+    btnEditar.className = "icon-btn";
     btnEditar.addEventListener("click", () => onEdit(item));
     li.appendChild(btnEditar);
   }
@@ -165,6 +204,94 @@ function renderItem(item, onToggleFeito, onEdit) {
  * Liga o botão flutuante de captura rápida (markup #btn-capturar / #modal-captura) ao POST /items.
  * onSalvo() é chamado depois de um POST bem-sucedido, pra recarregar a lista da página.
  */
+/**
+ * Mostra só o campo de data relevante pro tipo escolhido (tarefa->prazo,
+ * evento->data do evento, nota->nenhum). Sem tipo escolhido, mostra os dois.
+ */
+function alternarCamposData(tipoSelect, campoPrazoId, campoDataEventoId) {
+  function atualizar() {
+    const campoPrazo = document.getElementById(campoPrazoId);
+    const campoDataEvento = document.getElementById(campoDataEventoId);
+    if (!campoPrazo || !campoDataEvento) return;
+    const tipo = tipoSelect.value;
+    campoPrazo.classList.toggle("hidden", tipo === "evento" || tipo === "nota");
+    campoDataEvento.classList.toggle("hidden", tipo === "tarefa" || tipo === "nota");
+  }
+  tipoSelect.addEventListener("change", atualizar);
+  atualizar();
+  return atualizar;
+}
+
+/**
+ * Mostra o seletor de chips de tempo_estimado só quando tipo === "tarefa".
+ */
+function alternarCampoTempoEstimado(tipoSelect, campoId) {
+  function atualizar() {
+    const campo = document.getElementById(campoId);
+    if (!campo) return;
+    campo.classList.toggle("hidden", tipoSelect.value !== "tarefa");
+  }
+  tipoSelect.addEventListener("change", atualizar);
+  atualizar();
+  return atualizar;
+}
+
+/**
+ * Mostra o seletor de matéria só quando area === "faculdade", e popula suas
+ * opções a partir de GET /disciplinas.
+ */
+function alternarCampoDisciplina(areaSelect, campoId, selectId) {
+  const selectEl = document.getElementById(selectId);
+  if (selectEl) {
+    fetch("/disciplinas")
+      .then((r) => r.json())
+      .then((disciplinas) => {
+        selectEl.innerHTML =
+          '<option value="">—</option>' +
+          disciplinas.map((d) => `<option value="${d.id}">${d.nome}</option>`).join("");
+      });
+  }
+
+  function atualizar() {
+    const campo = document.getElementById(campoId);
+    if (!campo) return;
+    campo.classList.toggle("hidden", areaSelect.value !== "faculdade");
+  }
+  areaSelect.addEventListener("change", atualizar);
+  atualizar();
+  return atualizar;
+}
+
+/**
+ * Liga um grupo de botões data-valor dentro de #containerId como seletor
+ * exclusivo (chip). Retorna { getValor, setValor }.
+ */
+function configurarChips(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) {
+    return { getValor: () => "", setValor: () => {} };
+  }
+  const botoes = Array.from(container.querySelectorAll("button[data-valor]"));
+
+  function marcar(valor) {
+    container.dataset.valor = valor || "";
+    botoes.forEach((b) => b.classList.toggle("chip-selecionado", b.dataset.valor === valor));
+  }
+
+  botoes.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const jaSelecionado = container.dataset.valor === btn.dataset.valor;
+      marcar(jaSelecionado ? "" : btn.dataset.valor);
+    });
+  });
+
+  marcar("");
+  return {
+    getValor: () => container.dataset.valor || "",
+    setValor: marcar,
+  };
+}
+
 function setupCaptura(onSalvo, mostrarToast) {
   const modal = document.getElementById("modal-captura");
   const btnCapturar = document.getElementById("btn-capturar");
@@ -179,10 +306,19 @@ function setupCaptura(onSalvo, mostrarToast) {
   const inputDataEvento = document.getElementById("input-data-evento");
   const inputFocoHoje = document.getElementById("input-foco-hoje");
   const inputLembrete = document.getElementById("input-lembrete");
+  const chipsTempoEstimado = configurarChips("chips-input-tempo-estimado");
+  const inputDisciplina = document.getElementById("input-disciplina");
+
+  alternarCamposData(inputTipo, "campo-input-prazo", "campo-input-data-evento");
+  const atualizarCampoTempoEstimado = alternarCampoTempoEstimado(inputTipo, "campo-input-tempo-estimado");
+  const atualizarCampoDisciplina = alternarCampoDisciplina(inputArea, "campo-input-disciplina", "input-disciplina");
 
   function abrir() {
     modal.classList.remove("hidden");
     form.reset();
+    chipsTempoEstimado.setValor("");
+    atualizarCampoTempoEstimado();
+    atualizarCampoDisciplina();
     inputTitulo.focus();
   }
 
@@ -201,11 +337,18 @@ function setupCaptura(onSalvo, mostrarToast) {
     const titulo = inputTitulo.value.trim();
     if (!titulo) return;
 
+    if (inputTipo.value === "tarefa" && !chipsTempoEstimado.getValor()) {
+      if (mostrarToast) mostrarToast("Escolha o tempo estimado da tarefa");
+      return;
+    }
+
     const payload = { titulo };
     if (inputDescricao.value.trim()) payload.descricao = inputDescricao.value.trim();
     if (inputTipo.value) payload.tipo = inputTipo.value;
     if (inputArea.value) payload.area = inputArea.value;
     if (inputPrioridade.value) payload.prioridade = inputPrioridade.value;
+    if (inputTipo.value === "tarefa") payload.tempo_estimado = chipsTempoEstimado.getValor();
+    if (inputArea.value === "faculdade" && inputDisciplina.value) payload.disciplina_id = inputDisciplina.value;
     if (inputPrazo.value) payload.prazo = inputPrazo.value;
     if (inputDataEvento.value) payload.data_evento = inputDataEvento.value;
     if (inputFocoHoje.checked) payload.foco_hoje = true;
@@ -216,6 +359,11 @@ function setupCaptura(onSalvo, mostrarToast) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
+    if (resp.status === 409) {
+      if (mostrarToast) mostrarToast("Já existe um item ativo com esse título");
+      return;
+    }
 
     fechar();
     if (mostrarToast) mostrarToast(resp.ok ? "Item salvo" : "Erro ao salvar item");
@@ -228,6 +376,53 @@ function setupCaptura(onSalvo, mostrarToast) {
  * onSalvo() é chamado depois de um PATCH ou DELETE bem-sucedido, pra recarregar a lista da página.
  * Retorna a função abrirEdicao(item) a ser usada como onEdit no renderItem.
  */
+/**
+ * Liga o modal de visualização rápida (markup #modal-visualizar) — abre ao
+ * clicar num card, mostra título/descrição, e o lápis leva pra edição.
+ * Retorna a função abrirVisualizacao(item) a ser usada como onView no renderItem.
+ */
+function setupVisualizacao(onEdit) {
+  const modal = document.getElementById("modal-visualizar");
+  if (!modal) return null;
+
+  const tituloEl = document.getElementById("visualizar-titulo");
+  const descricaoEl = document.getElementById("visualizar-descricao");
+  const btnEditar = document.getElementById("btn-visualizar-editar");
+  const btnFechar = document.getElementById("btn-visualizar-fechar");
+
+  let itemAtual = null;
+
+  function fechar() {
+    modal.classList.add("hidden");
+    itemAtual = null;
+  }
+
+  function abrirVisualizacao(item) {
+    itemAtual = item;
+    tituloEl.textContent = item.titulo;
+    if (item.descricao) {
+      descricaoEl.textContent = item.descricao;
+      descricaoEl.classList.remove("text-slate-500", "italic");
+    } else {
+      descricaoEl.textContent = "Sem descrição.";
+      descricaoEl.classList.add("text-slate-500", "italic");
+    }
+    modal.classList.remove("hidden");
+  }
+
+  btnFechar.addEventListener("click", fechar);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) fechar();
+  });
+  btnEditar.addEventListener("click", () => {
+    const item = itemAtual;
+    fechar();
+    if (item) onEdit(item);
+  });
+
+  return abrirVisualizacao;
+}
+
 function setupEdicao(onSalvo, mostrarToast) {
   const modal = document.getElementById("modal-editar");
   const form = document.getElementById("form-editar");
@@ -243,6 +438,15 @@ function setupEdicao(onSalvo, mostrarToast) {
   const campoLembrete = document.getElementById("edit-lembrete");
   const btnCancelar = document.getElementById("btn-editar-cancelar");
   const btnExcluir = document.getElementById("btn-editar-excluir");
+  const checklistLista = document.getElementById("edit-checklist-lista");
+  const formChecklist = document.getElementById("form-edit-checklist");
+  const inputChecklist = document.getElementById("edit-checklist-input");
+  const chipsTempoEstimado = configurarChips("chips-edit-tempo-estimado");
+  const campoDisciplina = document.getElementById("edit-disciplina");
+
+  const atualizarCamposData = alternarCamposData(campoTipo, "campo-edit-prazo", "campo-edit-data-evento");
+  const atualizarCampoTempoEstimado = alternarCampoTempoEstimado(campoTipo, "campo-edit-tempo-estimado");
+  const atualizarCampoDisciplina = alternarCampoDisciplina(campoArea, "campo-edit-disciplina", "edit-disciplina");
 
   let itemAtualId = null;
 
@@ -254,6 +458,77 @@ function setupEdicao(onSalvo, mostrarToast) {
   function fechar() {
     modal.classList.add("hidden");
     itemAtualId = null;
+  }
+
+  async function carregarChecklist() {
+    if (!checklistLista || !itemAtualId) return;
+    const resp = await fetch(`/items/${itemAtualId}/checklist`);
+    const subitens = await resp.json();
+
+    checklistLista.innerHTML = "";
+    for (const sub of subitens) {
+      const li = document.createElement("li");
+      li.className = "flex items-center gap-2";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = sub.concluido;
+      checkbox.className = "w-4 h-4 accent-[color:var(--accent)] shrink-0";
+      checkbox.addEventListener("change", async () => {
+        await fetch(`/checklist/${sub.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ concluido: checkbox.checked }),
+        });
+        await carregarChecklist();
+        await onSalvo();
+      });
+
+      const texto = document.createElement("span");
+      texto.textContent = sub.titulo;
+      texto.className = `text-sm flex-1 break-words ${sub.concluido ? "line-through text-slate-500" : ""}`;
+
+      const btnRemover = document.createElement("button");
+      btnRemover.type = "button";
+      btnRemover.textContent = "×";
+      btnRemover.className = "icon-btn";
+      btnRemover.addEventListener("click", async () => {
+        await fetch(`/checklist/${sub.id}`, { method: "DELETE" });
+        await carregarChecklist();
+        await onSalvo();
+      });
+
+      li.appendChild(checkbox);
+      li.appendChild(texto);
+      li.appendChild(btnRemover);
+      checklistLista.appendChild(li);
+    }
+  }
+
+  async function adicionarChecklistItem() {
+    if (!itemAtualId) return;
+    const titulo = inputChecklist.value.trim();
+    if (!titulo) return;
+
+    await fetch(`/items/${itemAtualId}/checklist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ titulo }),
+    });
+
+    inputChecklist.value = "";
+    await carregarChecklist();
+    await onSalvo();
+  }
+
+  if (formChecklist) {
+    document.getElementById("btn-edit-checklist-add").addEventListener("click", adicionarChecklistItem);
+    inputChecklist.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        adicionarChecklistItem();
+      }
+    });
   }
 
   function abrirEdicao(item) {
@@ -268,7 +543,13 @@ function setupEdicao(onSalvo, mostrarToast) {
     campoDataEvento.value = paraInputDatetime(item.data_evento);
     campoFocoHoje.checked = !!item.foco_hoje;
     campoLembrete.value = item.lembrete_minutos ? String(item.lembrete_minutos) : "";
+    chipsTempoEstimado.setValor(item.tempo_estimado || "");
+    campoDisciplina.value = item.disciplina_id || "";
+    atualizarCamposData();
+    atualizarCampoTempoEstimado();
+    atualizarCampoDisciplina();
     modal.classList.remove("hidden");
+    carregarChecklist();
   }
 
   btnCancelar.addEventListener("click", fechar);
@@ -280,12 +561,19 @@ function setupEdicao(onSalvo, mostrarToast) {
     e.preventDefault();
     if (!itemAtualId) return;
 
+    if (campoTipo.value === "tarefa" && !chipsTempoEstimado.getValor()) {
+      if (mostrarToast) mostrarToast("Escolha o tempo estimado da tarefa");
+      return;
+    }
+
     const payload = {
       titulo: campoTitulo.value.trim(),
       descricao: campoDescricao.value.trim() || null,
       tipo: campoTipo.value || null,
       area: campoArea.value || null,
       prioridade: campoPrioridade.value || null,
+      tempo_estimado: campoTipo.value === "tarefa" ? chipsTempoEstimado.getValor() : null,
+      disciplina_id: campoArea.value === "faculdade" ? campoDisciplina.value || null : null,
       status: campoStatus.value,
       prazo: campoPrazo.value || null,
       data_evento: campoDataEvento.value || null,
@@ -298,6 +586,11 @@ function setupEdicao(onSalvo, mostrarToast) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
+
+    if (resp.status === 409) {
+      if (mostrarToast) mostrarToast("Já existe um item ativo com esse título");
+      return;
+    }
 
     fechar();
     if (mostrarToast) mostrarToast(resp.ok ? "Item atualizado" : "Erro ao atualizar");
