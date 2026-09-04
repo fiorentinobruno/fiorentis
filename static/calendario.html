@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Calendário — Fiorentis</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/static/theme.css?v=1787983124" />
+<link rel="stylesheet" href="/static/theme.css?v=1788495120" />
 </head>
 <body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
 
   <div id="header-root"></div>
 
-  <main class="max-w-6xl mx-auto px-4 pt-6 pb-16">
+  <main class="max-w-6xl mx-auto px-4 pt-6 pb-28">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm p-4 sm:p-6">
 
       <div class="flex items-center justify-between mb-5">
@@ -143,6 +143,16 @@
                 class="w-full border border-slate-700 rounded-lg px-2 py-2 text-sm" />
             </div>
 
+            <div id="campo-input-tempo-estimado" class="hidden">
+              <label class="block text-xs text-slate-400 mb-1">Tempo estimado</label>
+              <div id="chips-input-tempo-estimado" class="flex gap-2 flex-wrap">
+                <button type="button" class="chip" data-valor="15min">15min</button>
+                <button type="button" class="chip" data-valor="30min">30min</button>
+                <button type="button" class="chip" data-valor="1h">1h</button>
+                <button type="button" class="chip" data-valor="2h+">2h+</button>
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs text-slate-400 mb-1">Lembrete</label>
               <select id="input-lembrete"
@@ -255,6 +265,16 @@
             </div>
           </div>
 
+          <div id="campo-edit-tempo-estimado" class="hidden">
+            <label class="block text-xs text-slate-400 mb-1">Tempo estimado</label>
+            <div id="chips-edit-tempo-estimado" class="flex gap-2 flex-wrap">
+              <button type="button" class="chip" data-valor="15min">15min</button>
+              <button type="button" class="chip" data-valor="30min">30min</button>
+              <button type="button" class="chip" data-valor="1h">1h</button>
+              <button type="button" class="chip" data-valor="2h+">2h+</button>
+            </div>
+          </div>
+
           <div>
             <label class="block text-xs text-slate-400 mb-1">Lembrete</label>
             <select id="edit-lembrete"
@@ -315,10 +335,10 @@
     class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-40">
   </div>
 
-  <script src="/static/header.js?v=1787983124"></script>
+  <script src="/static/header.js?v=1788495120"></script>
   <script>initHeader({ menu: "tarefas", pagina: "calendario" });</script>
-  <script src="/static/shared.js?v=1787983124"></script>
-  <script src="/static/notifications.js?v=1787983124"></script>
-  <script src="/static/calendario.js?v=1787983124"></script>
+  <script src="/static/shared.js?v=1788495120"></script>
+  <script src="/static/notifications.js?v=1788495120"></script>
+  <script src="/static/calendario.js?v=1788495120"></script>
 </body>
 </html>

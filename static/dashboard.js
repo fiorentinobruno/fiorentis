@@ -199,6 +199,12 @@ async function carregarGrafico() {
   const valores = pontos.map((p) => p.total_feitos);
 
   const ctx = document.getElementById("grafico-checklist").getContext("2d");
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#22d3ee";
+
+  const gradiente = ctx.createLinearGradient(0, 0, 0, 220);
+  gradiente.addColorStop(0, `color-mix(in srgb, ${accent} 35%, transparent)`);
+  gradiente.addColorStop(1, `color-mix(in srgb, ${accent} 0%, transparent)`);
+
   if (chartInstance) chartInstance.destroy();
   chartInstance = new Chart(ctx, {
     type: "line",
@@ -208,22 +214,48 @@ async function carregarGrafico() {
         {
           label: "Itens concluídos",
           data: valores,
-          borderColor: "#22d3ee",
-          backgroundColor: "rgba(34, 211, 238, 0.15)",
-          tension: 0.35,
+          borderColor: accent,
+          backgroundColor: gradiente,
+          borderWidth: 2.5,
+          tension: 0.4,
           fill: true,
           pointRadius: 0,
-          pointHoverRadius: 4,
-          pointHoverBackgroundColor: "#22d3ee",
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: accent,
+          pointHoverBorderColor: "#0f172a",
+          pointHoverBorderWidth: 2,
         },
       ],
     },
     options: {
       responsive: true,
-      plugins: { legend: { display: false } },
+      maintainAspectRatio: true,
+      interaction: { mode: "index", intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "#1e293b",
+          borderColor: accent,
+          borderWidth: 1,
+          titleColor: "#e2e8f0",
+          bodyColor: "#e2e8f0",
+          padding: 10,
+          cornerRadius: 8,
+          displayColors: false,
+        },
+      },
       scales: {
-        x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,0.1)" } },
-        y: { beginAtZero: true, ticks: { color: "#94a3b8", precision: 0 }, grid: { color: "rgba(148,163,184,0.1)" } },
+        x: {
+          ticks: { color: "#64748b", font: { size: 11 } },
+          grid: { display: false },
+          border: { color: "rgba(148,163,184,0.15)" },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: "#64748b", precision: 0, font: { size: 11 } },
+          grid: { color: "rgba(148,163,184,0.08)" },
+          border: { display: false },
+        },
       },
     },
   });
@@ -233,20 +265,32 @@ async function carregarResumo() {
   const resp = await fetch("/api/dashboard/resumo");
   const resumo = await resp.json();
 
+  function tile(valor, rotulo, corValor, corBorda) {
+    const div = document.createElement("div");
+    div.className = `rounded-lg bg-slate-950/40 border-l-2 ${corBorda} px-3 py-2`;
+    div.innerHTML = `
+      <p class="text-2xl font-bold leading-none tracking-tight ${corValor}">${valor}</p>
+      <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500 mt-1.5">${rotulo}</p>
+    `;
+    return div;
+  }
+
   function renderPeriodo(elId, periodo) {
     const el = document.getElementById(elId);
     el.innerHTML = "";
-    const linhas = [
-      `✓ ${periodo.tarefas_feitas} feitas`,
-      `${periodo.tarefas_pendentes} pendentes`,
-      `${periodo.eventos} evento${periodo.eventos === 1 ? "" : "s"}`,
-      `☑ ${periodo.checklist_feitos}/${periodo.checklist_total} checklist`,
-    ];
-    for (const linha of linhas) {
-      const p = document.createElement("p");
-      p.textContent = linha;
-      el.appendChild(p);
-    }
+    el.appendChild(tile(periodo.tarefas_feitas, "feitas", "text-emerald-400", "border-emerald-500/60"));
+    el.appendChild(tile(periodo.tarefas_pendentes, "pendentes", "text-amber-400", "border-amber-500/60"));
+    el.appendChild(
+      tile(periodo.eventos, periodo.eventos === 1 ? "evento" : "eventos", "text-sky-400", "border-sky-500/60")
+    );
+    el.appendChild(
+      tile(
+        `${periodo.checklist_feitos}/${periodo.checklist_total}`,
+        "checklist",
+        "text-[color:var(--accent-soft)]",
+        "border-[color:var(--accent)]/60"
+      )
+    );
   }
 
   renderPeriodo("resumo-hoje", resumo.hoje);

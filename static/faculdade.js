@@ -29,6 +29,28 @@ function mostrarToast(texto) {
   toastTimeout = setTimeout(() => toast.classList.add("hidden"), 2500);
 }
 
+function badgePrazo(prazoISO, feito) {
+  if (!prazoISO) return null;
+  const data = new Date(prazoISO);
+  const hoje = new Date();
+  const somenteData = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDias = Math.round((somenteData(data) - somenteData(hoje)) / 86400000);
+
+  let cor = "bg-slate-800 text-slate-300 border border-slate-700";
+  if (feito) {
+    cor = "bg-slate-800/60 text-slate-500 border border-slate-800";
+  } else if (diffDias < 0) {
+    cor = "bg-rose-950/60 text-rose-300 border border-rose-800/60";
+  } else if (diffDias === 0) {
+    cor = "bg-amber-950/60 text-amber-300 border border-amber-800/60";
+  }
+
+  const badge = document.createElement("span");
+  badge.className = `inline-flex items-center gap-1 shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold ${cor}`;
+  badge.textContent = data.toLocaleDateString("pt-br", { day: "2-digit", month: "2-digit" });
+  return badge;
+}
+
 function corPara(disciplinaId, disciplinas) {
   const idx = disciplinas.findIndex((d) => d.id === disciplinaId);
   return CORES[idx % CORES.length];
@@ -237,6 +259,8 @@ async function renderListaDisciplinas(disciplinas) {
       const li = document.createElement("li");
       li.className = "flex items-center gap-2";
       li.innerHTML = `<span class="text-sm flex-1 break-words">${item.titulo}</span>`;
+      const badge = badgePrazo(item.prazo || item.data_evento, item.status === "feito");
+      if (badge) li.appendChild(badge);
       const btnFeito = document.createElement("button");
       btnFeito.type = "button";
       btnFeito.textContent = "✓";
@@ -348,12 +372,13 @@ function renderItemComChecklist(item) {
   titulo.className = `block text-sm break-words ${feito ? "line-through text-slate-500" : ""}`;
   corpo.appendChild(titulo);
 
-  if (item.prazo) {
-    const prazo = document.createElement("span");
-    prazo.textContent = new Date(item.prazo).toLocaleDateString("pt-br", { day: "2-digit", month: "2-digit" }) +
-      " " + new Date(item.prazo).toLocaleTimeString("pt-br", { hour: "2-digit", minute: "2-digit" });
-    prazo.className = "block text-xs text-slate-500";
-    corpo.appendChild(prazo);
+  const dataItem = item.prazo || item.data_evento;
+  if (dataItem) {
+    const linhaData = document.createElement("div");
+    linhaData.className = "mt-1";
+    const badge = badgePrazo(dataItem, feito);
+    linhaData.appendChild(badge);
+    corpo.appendChild(linhaData);
   }
 
   const btnChecklist = document.createElement("button");
@@ -520,20 +545,16 @@ async function renderSemana(disciplinas) {
     bloco.appendChild(titulo);
 
     const lista = document.createElement("ul");
-    lista.className = "space-y-1";
+    lista.className = "space-y-1.5";
     for (const item of agrupado[disciplinaId]) {
       const li = document.createElement("li");
       li.className = "text-sm text-slate-400 flex items-center justify-between gap-2";
       const nome = document.createElement("span");
       nome.textContent = item.titulo;
-      nome.className = item.status === "feito" ? "line-through text-slate-600" : "";
+      nome.className = `min-w-0 break-words ${item.status === "feito" ? "line-through text-slate-600" : ""}`;
       li.appendChild(nome);
-      if (item.prazo) {
-        const prazo = document.createElement("span");
-        prazo.textContent = new Date(item.prazo).toLocaleDateString("pt-br", { day: "2-digit", month: "2-digit" });
-        prazo.className = "text-xs text-slate-500 shrink-0";
-        li.appendChild(prazo);
-      }
+      const badge = badgePrazo(item.prazo || item.data_evento, item.status === "feito");
+      if (badge) li.appendChild(badge);
       lista.appendChild(li);
     }
     bloco.appendChild(lista);
@@ -548,5 +569,7 @@ async function carregarTudo() {
   await renderListaDisciplinas(disciplinas);
   await renderSemana(disciplinas);
 }
+
+setupCaptura(carregarTudo, mostrarToast);
 
 carregarTudo();
