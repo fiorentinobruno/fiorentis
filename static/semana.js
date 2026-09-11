@@ -23,7 +23,7 @@ async function marcarFeito(id, feito) {
 }
 
 const abrirEdicao = setupEdicao(carregarSemana, mostrarToast);
-const abrirVisualizacao = setupVisualizacao(abrirEdicao);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao, carregarSemana);
 setupCaptura(carregarSemana, mostrarToast);
 
 async function carregarSemana() {

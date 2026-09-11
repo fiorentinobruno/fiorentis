@@ -55,7 +55,7 @@ async function marcarFeito(id, feito) {
 }
 
 const abrirEdicao = setupEdicao(carregarItens, mostrarToast);
-const abrirVisualizacao = setupVisualizacao(abrirEdicao);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao, carregarItens);
 setupCaptura(carregarItens, mostrarToast);
 
 function virarTarefa(item) {

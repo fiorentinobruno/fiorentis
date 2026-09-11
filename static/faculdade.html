@@ -5,7 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Faculdade — Fiorentis</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/static/theme.css?v=1788495120" />
+<link rel="stylesheet" href="/static/theme.css?v=1789089001" />
+<style>
+  @media (max-width: 1023px) {
+    #grade-semana[data-dia-ativo] [data-dia] { display: none; }
+    #grade-semana[data-dia-ativo="0"] [data-dia="0"],
+    #grade-semana[data-dia-ativo="1"] [data-dia="1"],
+    #grade-semana[data-dia-ativo="2"] [data-dia="2"],
+    #grade-semana[data-dia-ativo="3"] [data-dia="3"],
+    #grade-semana[data-dia-ativo="4"] [data-dia="4"] { display: table-cell; }
+  }
+</style>
 </head>
 <body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
 
@@ -24,9 +34,11 @@
       Nenhuma disciplina cadastrada ainda.
     </div>
 
+    <div id="abas-dia" class="flex lg:hidden gap-1 bg-slate-900 border border-slate-800 rounded-full p-1 mb-3"></div>
+
     <div class="flex flex-col lg:flex-row gap-6 items-start">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-x-auto flex-1 min-w-0">
-        <table id="grade-semana" class="w-full min-w-[720px] border-collapse text-sm"></table>
+        <table id="grade-semana" class="w-full lg:min-w-[720px] border-collapse text-sm"></table>
       </div>
 
       <div class="w-full lg:w-96 lg:shrink-0">
@@ -198,10 +210,15 @@
               </select>
             </div>
 
-            <label class="flex items-center gap-2 text-sm text-slate-300">
-              <input id="input-foco-hoje" type="checkbox" class="w-4 h-4 accent-[color:var(--accent)]" />
-              Focar hoje
-            </label>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Começar</label>
+              <div class="flex gap-2 flex-wrap">
+                <button type="button" id="input-inicio-hoje" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Hoje</button>
+                <button type="button" id="input-inicio-amanha" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Amanhã</button>
+                <button type="button" id="input-inicio-semana" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Semana que vem</button>
+              </div>
+              <input id="input-data-inicio" type="hidden" />
+            </div>
           </div>
         </details>
 
@@ -220,9 +237,9 @@
     class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
   </div>
 
-  <script src="/static/header.js?v=1788495120"></script>
+  <script src="/static/header.js?v=1789089001"></script>
   <script>initHeader({ menu: "faculdade", pagina: "faculdade" });</script>
-  <script src="/static/shared.js?v=1788495120"></script>
-  <script src="/static/faculdade.js?v=1788495120"></script>
+  <script src="/static/shared.js?v=1789089001"></script>
+  <script src="/static/faculdade.js?v=1788495122"></script>
 </body>
 </html>

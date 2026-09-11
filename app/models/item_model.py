@@ -80,6 +80,7 @@ class Item(Base):
     )
     prazo: Mapped[datetime | None] = mapped_column(nullable=True)
     data_evento: Mapped[datetime | None] = mapped_column(nullable=True)
+    data_inicio: Mapped[datetime | None] = mapped_column(nullable=True)
     foco_hoje: Mapped[bool] = mapped_column(nullable=False, default=False)
     lembrete_minutos: Mapped[int | None] = mapped_column(nullable=True)
     lembrete_enviado_em: Mapped[datetime | None] = mapped_column(nullable=True)

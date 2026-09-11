@@ -33,11 +33,13 @@ async function marcarFeito(id, feito) {
   }
 }
 
-const abrirEdicao = setupEdicao(async () => {
+async function recarregarMesEDia() {
   await carregarMes();
   if (!modalDia.classList.contains("hidden") && diaSelecionado) abrirDia(diaSelecionado);
-}, mostrarToast);
-const abrirVisualizacao = setupVisualizacao(abrirEdicao);
+}
+
+const abrirEdicao = setupEdicao(recarregarMesEDia, mostrarToast);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao, recarregarMesEDia);
 setupCaptura(carregarMes, mostrarToast);
 
 const hoje = new Date();

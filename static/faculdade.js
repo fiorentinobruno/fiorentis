@@ -1,4 +1,4 @@
-const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex"];
 const CORES = [
   "bg-sky-950/60 text-sky-300 border border-sky-800/60",
   "bg-purple-950/60 text-purple-300 border border-purple-800/60",
@@ -10,6 +10,30 @@ const CORES = [
 
 const gradeEl = document.getElementById("grade-semana");
 const gradeVaziaEl = document.getElementById("grade-vazia");
+const abasDiaEl = document.getElementById("abas-dia");
+
+const hojeDiaSemana = (new Date().getDay() + 6) % 7; // 0=Seg ... 6=Dom
+let diaAtivoMobile = hojeDiaSemana < DIAS.length ? hojeDiaSemana : 0;
+
+function renderAbasDia() {
+  if (!abasDiaEl) return;
+  abasDiaEl.innerHTML = DIAS.map(
+    (d, i) => `
+    <button type="button" data-dia="${i}"
+      class="aba-dia flex-1 text-sm font-medium rounded-full px-3 py-1.5 transition ${
+        i === diaAtivoMobile
+          ? "bg-[color:var(--accent)] text-white"
+          : "text-slate-400 hover:text-slate-200"
+      }">${d}</button>`
+  ).join("");
+  abasDiaEl.querySelectorAll(".aba-dia").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      diaAtivoMobile = Number(btn.dataset.dia);
+      renderAbasDia();
+      gradeEl.dataset.diaAtivo = String(diaAtivoMobile);
+    });
+  });
+}
 const listaEl = document.getElementById("lista-disciplinas");
 const toast = document.getElementById("toast");
 
@@ -157,7 +181,9 @@ form.addEventListener("submit", async (e) => {
 
 function renderGrade(disciplinas) {
   gradeEl.innerHTML = "";
+  gradeEl.dataset.diaAtivo = String(diaAtivoMobile);
   gradeVaziaEl.classList.toggle("hidden", disciplinas.length > 0);
+  renderAbasDia();
 
   const blocos = disciplinas.flatMap((d) => d.horarios.map((h) => ({ ...h, disciplina: d })));
 
@@ -165,7 +191,7 @@ function renderGrade(disciplinas) {
   cabecalho.innerHTML = `
     <tr class="bg-slate-800">
       <th class="text-left text-xs font-semibold text-slate-400 px-3 py-2 w-20">Hora</th>
-      ${DIAS.map((d) => `<th class="text-left text-xs font-semibold text-slate-400 px-3 py-2">${d}</th>`).join("")}
+      ${DIAS.map((d, i) => `<th data-dia="${i}" class="text-left text-xs font-semibold text-slate-400 px-3 py-2">${d}</th>`).join("")}
     </tr>`;
   gradeEl.appendChild(cabecalho);
 
@@ -189,8 +215,9 @@ function renderGrade(disciplinas) {
     tdHora.className = "px-3 py-2.5 text-xs font-medium text-slate-400 border-t border-slate-800 whitespace-nowrap";
     tr.appendChild(tdHora);
 
-    for (let dia = 0; dia < 6; dia++) {
+    for (let dia = 0; dia < DIAS.length; dia++) {
       const td = document.createElement("td");
+      td.dataset.dia = String(dia);
       td.className = "px-3 py-2.5 border-t border-slate-800 align-top";
 
       const bloco = blocos.find(

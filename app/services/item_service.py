@@ -66,11 +66,14 @@ def _validar_tempo_estimado(item: Item) -> None:
 
 
 def _predicado_dia(dia_inicio: datetime, dia_fim: datetime):
+    nao_iniciado_ainda = Item.data_inicio.isnot(None) & (Item.data_inicio >= dia_fim)
+    comecou_hoje = (Item.data_inicio >= dia_inicio) & (Item.data_inicio < dia_fim)
     return and_(
         or_(
             Item.foco_hoje.is_(True),
-            (Item.data_evento >= dia_inicio) & (Item.data_evento < dia_fim),
-            Item.prazo < dia_fim,
+            comecou_hoje,
+            and_((Item.data_evento >= dia_inicio) & (Item.data_evento < dia_fim), ~nao_iniciado_ainda),
+            and_(Item.prazo < dia_fim, ~nao_iniciado_ainda),
         ),
         Item.status != StatusItem.ARQUIVADO,
         or_(
@@ -144,10 +147,16 @@ def list_items(
         query = query.filter(_predicado_dia(hoje_inicio, hoje_fim))
     elif view == "semana":
         semana_inicio, semana_fim = intervalo_semana(datetime.now().date())
+        nao_iniciado_na_semana = Item.data_inicio.isnot(None) & (Item.data_inicio >= semana_fim)
+        comecou_na_semana = (Item.data_inicio >= semana_inicio) & (Item.data_inicio < semana_fim)
         query = query.filter(
             or_(
-                (Item.prazo >= semana_inicio) & (Item.prazo < semana_fim),
-                (Item.data_evento >= semana_inicio) & (Item.data_evento < semana_fim),
+                comecou_na_semana,
+                and_((Item.prazo >= semana_inicio) & (Item.prazo < semana_fim), ~nao_iniciado_na_semana),
+                and_(
+                    (Item.data_evento >= semana_inicio) & (Item.data_evento < semana_fim),
+                    ~nao_iniciado_na_semana,
+                ),
             ),
             Item.status != StatusItem.ARQUIVADO,
         )

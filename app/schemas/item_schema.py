@@ -24,6 +24,7 @@ class ItemCreate(BaseModel):
     tempo_estimado: TempoEstimadoItem | None = None
     prazo: datetime | None = None
     data_evento: datetime | None = None
+    data_inicio: datetime | None = None
     foco_hoje: bool = False
     lembrete_minutos: int | None = None
     categoria_compra: CategoriaCompra | None = None
@@ -43,6 +44,7 @@ class ItemUpdate(BaseModel):
     tempo_estimado: TempoEstimadoItem | None = None
     prazo: datetime | None = None
     data_evento: datetime | None = None
+    data_inicio: datetime | None = None
     foco_hoje: bool | None = None
     lembrete_minutos: int | None = None
     categoria_compra: CategoriaCompra | None = None
@@ -61,6 +63,7 @@ class ItemRead(BaseModel):
     tempo_estimado: TempoEstimadoItem | None
     prazo: datetime | None
     data_evento: datetime | None
+    data_inicio: datetime | None
     foco_hoje: bool
     lembrete_minutos: int | None
     categoria_compra: CategoriaCompra | None

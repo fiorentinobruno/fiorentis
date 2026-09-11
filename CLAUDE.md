@@ -13,7 +13,7 @@ Note: `todo-api/` is an unrelated, separate old learning project (has its own `.
 ## Commands
 
 ```bash
-# Run the dev server (reload on)
+# Run the dev server (reload on)crie 
 uv run uvicorn app.main:app --reload
 # or: python main.py
 

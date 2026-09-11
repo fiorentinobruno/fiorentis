@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime, timedelta
 
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.models.dashboard_model import DailyChecklistItem, DailyChecklistLog, DailyQuote
@@ -41,7 +41,11 @@ def list_agenda_hoje(db: Session, limite: int = 3) -> list[Item]:
             Item.status != StatusItem.FEITO,
             or_(
                 Item.foco_hoje.is_(True),
-                (Item.prazo >= hoje_inicio) & (Item.prazo < hoje_fim),
+                (Item.data_inicio >= hoje_inicio) & (Item.data_inicio < hoje_fim),
+                and_(
+                    (Item.prazo >= hoje_inicio) & (Item.prazo < hoje_fim),
+                    or_(Item.data_inicio.is_(None), Item.data_inicio < hoje_fim),
+                ),
             ),
         )
         .all()

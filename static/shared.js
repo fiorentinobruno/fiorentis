@@ -292,6 +292,38 @@ function configurarChips(containerId) {
   };
 }
 
+/**
+ * Liga os 3 botões rápidos de início (Hoje/Amanhã/Semana que vem) a um campo
+ * hidden `${prefixo}-data-inicio`, usado tanto na captura quanto na edição.
+ */
+function configurarBotoesInicio(prefixo) {
+  const inputDataInicio = document.getElementById(`${prefixo}-data-inicio`);
+  const btnHoje = document.getElementById(`${prefixo}-inicio-hoje`);
+  const btnAmanha = document.getElementById(`${prefixo}-inicio-amanha`);
+  const btnSemana = document.getElementById(`${prefixo}-inicio-semana`);
+
+  function formatarMeiaNoite(data) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${data.getFullYear()}-${pad(data.getMonth() + 1)}-${pad(data.getDate())}T00:00`;
+  }
+
+  function definir(diasAPartirDeHoje) {
+    const data = new Date();
+    data.setDate(data.getDate() + diasAPartirDeHoje);
+    inputDataInicio.value = formatarMeiaNoite(data);
+  }
+
+  btnHoje?.addEventListener("click", () => definir(0));
+  btnAmanha?.addEventListener("click", () => definir(1));
+  btnSemana?.addEventListener("click", () => definir(7));
+
+  return {
+    limpar: () => {
+      inputDataInicio.value = "";
+    },
+  };
+}
+
 function setupCaptura(onSalvo, mostrarToast) {
   const modal = document.getElementById("modal-captura");
   const btnCapturar = document.getElementById("btn-capturar");
@@ -304,10 +336,11 @@ function setupCaptura(onSalvo, mostrarToast) {
   const inputPrioridade = document.getElementById("input-prioridade");
   const inputPrazo = document.getElementById("input-prazo");
   const inputDataEvento = document.getElementById("input-data-evento");
-  const inputFocoHoje = document.getElementById("input-foco-hoje");
+  const inputDataInicio = document.getElementById("input-data-inicio");
   const inputLembrete = document.getElementById("input-lembrete");
   const chipsTempoEstimado = configurarChips("chips-input-tempo-estimado");
   const inputDisciplina = document.getElementById("input-disciplina");
+  const botoesInicio = configurarBotoesInicio("input");
 
   alternarCamposData(inputTipo, "campo-input-prazo", "campo-input-data-evento");
   const atualizarCampoTempoEstimado = alternarCampoTempoEstimado(inputTipo, "campo-input-tempo-estimado");
@@ -317,6 +350,7 @@ function setupCaptura(onSalvo, mostrarToast) {
     modal.classList.remove("hidden");
     form.reset();
     chipsTempoEstimado.setValor("");
+    botoesInicio.limpar();
     atualizarCampoTempoEstimado();
     atualizarCampoDisciplina();
     inputTitulo.focus();
@@ -351,7 +385,7 @@ function setupCaptura(onSalvo, mostrarToast) {
     if (inputArea.value === "faculdade" && inputDisciplina.value) payload.disciplina_id = inputDisciplina.value;
     if (inputPrazo.value) payload.prazo = inputPrazo.value;
     if (inputDataEvento.value) payload.data_evento = inputDataEvento.value;
-    if (inputFocoHoje.checked) payload.foco_hoje = true;
+    if (inputDataInicio.value) payload.data_inicio = inputDataInicio.value;
     if (inputLembrete.value) payload.lembrete_minutos = Number(inputLembrete.value);
 
     const resp = await fetch("/items", {
@@ -381,7 +415,7 @@ function setupCaptura(onSalvo, mostrarToast) {
  * clicar num card, mostra título/descrição, e o lápis leva pra edição.
  * Retorna a função abrirVisualizacao(item) a ser usada como onView no renderItem.
  */
-function setupVisualizacao(onEdit) {
+function setupVisualizacao(onEdit, onSalvo) {
   const modal = document.getElementById("modal-visualizar");
   if (!modal) return null;
 
@@ -389,6 +423,7 @@ function setupVisualizacao(onEdit) {
   const descricaoEl = document.getElementById("visualizar-descricao");
   const btnEditar = document.getElementById("btn-visualizar-editar");
   const btnFechar = document.getElementById("btn-visualizar-fechar");
+  const btnMaisUmDia = document.getElementById("btn-visualizar-mais-um-dia");
 
   let itemAtual = null;
 
@@ -407,6 +442,7 @@ function setupVisualizacao(onEdit) {
       descricaoEl.textContent = "Sem descrição.";
       descricaoEl.classList.add("text-slate-500", "italic");
     }
+    if (btnMaisUmDia) btnMaisUmDia.classList.toggle("hidden", !item.prazo && !item.data_inicio);
     modal.classList.remove("hidden");
   }
 
@@ -419,6 +455,24 @@ function setupVisualizacao(onEdit) {
     fechar();
     if (item) onEdit(item);
   });
+  if (btnMaisUmDia) {
+    btnMaisUmDia.addEventListener("click", async () => {
+      const item = itemAtual;
+      const campo = item && item.prazo ? "prazo" : item && item.data_inicio ? "data_inicio" : null;
+      if (!item || !campo) return;
+      const novaData = new Date(item[campo]);
+      novaData.setDate(novaData.getDate() + 1);
+      const pad = (n) => String(n).padStart(2, "0");
+      const dataLocal = `${novaData.getFullYear()}-${pad(novaData.getMonth() + 1)}-${pad(novaData.getDate())}T${pad(novaData.getHours())}:${pad(novaData.getMinutes())}`;
+      await fetch(`/items/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [campo]: dataLocal }),
+      });
+      fechar();
+      if (onSalvo) await onSalvo();
+    });
+  }
 
   return abrirVisualizacao;
 }
@@ -434,7 +488,7 @@ function setupEdicao(onSalvo, mostrarToast) {
   const campoStatus = document.getElementById("edit-status");
   const campoPrazo = document.getElementById("edit-prazo");
   const campoDataEvento = document.getElementById("edit-data-evento");
-  const campoFocoHoje = document.getElementById("edit-foco-hoje");
+  const campoDataInicio = document.getElementById("edit-data-inicio");
   const campoLembrete = document.getElementById("edit-lembrete");
   const btnCancelar = document.getElementById("btn-editar-cancelar");
   const btnExcluir = document.getElementById("btn-editar-excluir");
@@ -444,6 +498,7 @@ function setupEdicao(onSalvo, mostrarToast) {
   const chipsTempoEstimado = configurarChips("chips-edit-tempo-estimado");
   const campoDisciplina = document.getElementById("edit-disciplina");
 
+  configurarBotoesInicio("edit");
   const atualizarCamposData = alternarCamposData(campoTipo, "campo-edit-prazo", "campo-edit-data-evento");
   const atualizarCampoTempoEstimado = alternarCampoTempoEstimado(campoTipo, "campo-edit-tempo-estimado");
   const atualizarCampoDisciplina = alternarCampoDisciplina(campoArea, "campo-edit-disciplina", "edit-disciplina");
@@ -541,7 +596,7 @@ function setupEdicao(onSalvo, mostrarToast) {
     campoStatus.value = item.status || "inbox";
     campoPrazo.value = paraInputDatetime(item.prazo);
     campoDataEvento.value = paraInputDatetime(item.data_evento);
-    campoFocoHoje.checked = !!item.foco_hoje;
+    campoDataInicio.value = paraInputDatetime(item.data_inicio);
     campoLembrete.value = item.lembrete_minutos ? String(item.lembrete_minutos) : "";
     chipsTempoEstimado.setValor(item.tempo_estimado || "");
     campoDisciplina.value = item.disciplina_id || "";
@@ -577,7 +632,7 @@ function setupEdicao(onSalvo, mostrarToast) {
       status: campoStatus.value,
       prazo: campoPrazo.value || null,
       data_evento: campoDataEvento.value || null,
-      foco_hoje: campoFocoHoje.checked,
+      data_inicio: campoDataInicio.value || null,
       lembrete_minutos: campoLembrete.value ? Number(campoLembrete.value) : null,
     };
 

@@ -30,7 +30,7 @@ async function marcarFeito(id, feito) {
 }
 
 const abrirEdicao = setupEdicao(carregarHoje, mostrarToast);
-const abrirVisualizacao = setupVisualizacao(abrirEdicao);
+const abrirVisualizacao = setupVisualizacao(abrirEdicao, carregarHoje);
 setupCaptura(carregarHoje, mostrarToast);
 
 const filtroTempo = configurarChips("chips-filtro-tempo");

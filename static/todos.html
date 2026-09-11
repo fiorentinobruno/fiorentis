@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Todos os itens — Fiorentis</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/static/theme.css?v=1788495120" />
+<link rel="stylesheet" href="/static/theme.css?v=1789089001" />
 </head>
 <body class="bg-slate-950 text-slate-300 min-h-screen overflow-x-hidden">
 
@@ -156,10 +156,15 @@
               </select>
             </div>
 
-            <label class="flex items-center gap-2 text-sm text-slate-300">
-              <input id="input-foco-hoje" type="checkbox" class="w-4 h-4 accent-[color:var(--accent)]" />
-              Focar hoje
-            </label>
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Começar</label>
+              <div class="flex gap-2 flex-wrap">
+                <button type="button" id="input-inicio-hoje" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Hoje</button>
+                <button type="button" id="input-inicio-amanha" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Amanhã</button>
+                <button type="button" id="input-inicio-semana" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Semana que vem</button>
+              </div>
+              <input id="input-data-inicio" type="hidden" />
+            </div>
           </div>
         </details>
 
@@ -278,10 +283,15 @@
             </select>
           </div>
 
-          <label class="flex items-center gap-2 text-sm text-slate-300">
-            <input id="edit-foco-hoje" type="checkbox" class="w-4 h-4 accent-[color:var(--accent)]" />
-            Focar hoje
-          </label>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Começar</label>
+            <div class="flex gap-2 flex-wrap">
+              <button type="button" id="edit-inicio-hoje" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Hoje</button>
+              <button type="button" id="edit-inicio-amanha" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Amanhã</button>
+              <button type="button" id="edit-inicio-semana" class="text-xs px-3 py-1.5 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]">Semana que vem</button>
+            </div>
+            <input id="edit-data-inicio" type="hidden" />
+          </div>
 
           <div>
             <label class="block text-xs text-slate-400 mb-1">Checklist</label>
@@ -313,6 +323,7 @@
       <div class="flex items-start justify-between gap-2 mb-3">
         <h3 id="visualizar-titulo" class="text-base font-semibold text-slate-100 break-words"></h3>
         <div class="flex items-center gap-1 shrink-0">
+          <button type="button" id="btn-visualizar-mais-um-dia" class="hidden text-xs px-2 py-1 rounded-lg border border-slate-700 text-slate-300 hover:border-[color:var(--accent)]" title="Adiar prazo em 1 dia">+1 dia</button>
           <button type="button" id="btn-visualizar-editar" class="icon-btn" title="Editar">✎</button>
           <button type="button" id="btn-visualizar-fechar" class="icon-btn" title="Fechar">×</button>
         </div>
@@ -326,10 +337,10 @@
     class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
   </div>
 
-  <script src="/static/header.js?v=1788495120"></script>
+  <script src="/static/header.js?v=1789089001"></script>
   <script>initHeader({ menu: "tarefas", pagina: "geral" });</script>
-  <script src="/static/shared.js?v=1788495120"></script>
-  <script src="/static/notifications.js?v=1788495120"></script>
-  <script src="/static/todos.js?v=1788495120"></script>
+  <script src="/static/shared.js?v=1789089001"></script>
+  <script src="/static/notifications.js?v=1789089001"></script>
+  <script src="/static/todos.js?v=1789089001"></script>
 </body>
 </html>
