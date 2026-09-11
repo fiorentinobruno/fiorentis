@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Faculdade — Fiorentis</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="/static/theme.css?v=1789089001" />
+<link rel="stylesheet" href="/static/theme.css?v=1789090023" />
 <style>
   @media (max-width: 1023px) {
     #grade-semana[data-dia-ativo] [data-dia] { display: none; }
@@ -34,11 +34,12 @@
       Nenhuma disciplina cadastrada ainda.
     </div>
 
-    <div id="abas-dia" class="flex lg:hidden gap-1 bg-slate-900 border border-slate-800 rounded-full p-1 mb-3"></div>
-
     <div class="flex flex-col lg:flex-row gap-6 items-start">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm overflow-x-auto flex-1 min-w-0">
-        <table id="grade-semana" class="w-full lg:min-w-[720px] border-collapse text-sm"></table>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-sm flex-1 min-w-0 overflow-hidden">
+        <div id="abas-dia" class="flex lg:hidden gap-1 p-2 border-b border-slate-800"></div>
+        <div class="overflow-x-auto">
+          <table id="grade-semana" class="w-full lg:min-w-[720px] border-collapse text-sm"></table>
+        </div>
       </div>
 
       <div class="w-full lg:w-96 lg:shrink-0">
@@ -237,9 +238,9 @@
     class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 bg-[color:var(--accent)] text-white text-sm px-4 py-2 rounded-full shadow-lg z-30">
   </div>
 
-  <script src="/static/header.js?v=1789089001"></script>
+  <script src="/static/header.js?v=1789090023"></script>
   <script>initHeader({ menu: "faculdade", pagina: "faculdade" });</script>
-  <script src="/static/shared.js?v=1789089001"></script>
+  <script src="/static/shared.js?v=1789090023"></script>
   <script src="/static/faculdade.js?v=1788495122"></script>
 </body>
 </html>

@@ -191,7 +191,7 @@ function renderGrade(disciplinas) {
   cabecalho.innerHTML = `
     <tr class="bg-slate-800">
       <th class="text-left text-xs font-semibold text-slate-400 px-3 py-2 w-20">Hora</th>
-      ${DIAS.map((d, i) => `<th data-dia="${i}" class="text-left text-xs font-semibold text-slate-400 px-3 py-2">${d}</th>`).join("")}
+      ${DIAS.map((d, i) => `<th data-dia="${i}" class="text-center lg:text-left text-xs font-semibold text-slate-400 px-3 py-2">${d}</th>`).join("")}
     </tr>`;
   gradeEl.appendChild(cabecalho);
 
@@ -218,7 +218,7 @@ function renderGrade(disciplinas) {
     for (let dia = 0; dia < DIAS.length; dia++) {
       const td = document.createElement("td");
       td.dataset.dia = String(dia);
-      td.className = "px-3 py-2.5 border-t border-slate-800 align-top";
+      td.className = "px-2 py-2 lg:px-3 lg:py-2.5 border-t border-slate-800 align-top";
 
       const bloco = blocos.find(
         (b) => b.dia_semana === dia && Number(b.hora_inicio.slice(0, 2)) <= hora && hora <= horaFimSlot(b)
@@ -227,9 +227,11 @@ function renderGrade(disciplinas) {
       if (bloco) {
         const badge = document.createElement("button");
         badge.type = "button";
-        badge.className = `w-full text-left rounded-lg px-2 py-1 text-xs font-medium cursor-pointer hover:brightness-125 transition ${corPara(bloco.disciplina.id, disciplinas)}`;
-        badge.innerHTML = `<div class="font-semibold">${bloco.disciplina.nome}</div>${
-          bloco.local ? `<div class="text-[11px] opacity-75">${bloco.local}</div>` : ""
+        badge.className = `w-full text-left rounded-lg px-3 py-2.5 lg:px-2 lg:py-1 flex flex-col gap-1 cursor-pointer hover:brightness-125 transition ${corPara(bloco.disciplina.id, disciplinas)}`;
+        badge.innerHTML = `<div class="font-semibold text-sm lg:text-xs">${bloco.disciplina.nome}</div>${
+          bloco.local
+            ? `<div class="inline-block w-fit text-xs lg:text-[11px] font-bold tracking-wide text-white bg-black/25 rounded px-1.5 py-0.5">${bloco.local}</div>`
+            : ""
         }`;
         badge.addEventListener("click", () => abrirModalMateria(bloco.disciplina));
         td.appendChild(badge);
