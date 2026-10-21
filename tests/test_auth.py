@@ -64,3 +64,10 @@ def test_conta_dono_da_migration_pode_ser_reivindicada_uma_vez(anon_client, db_s
     assert anon_client.post("/auth/register", json=dados).status_code == 201
     assert anon_client.post("/auth/login", json=dados).status_code == 200
     assert anon_client.post("/auth/register", json={**dados, "senha": "outra-senha-9"}).status_code == 409
+
+
+def test_email_placeholder_do_dono_e_aceito(anon_client):
+    resp = anon_client.post(
+        "/auth/register", json={"email": "dono@fiorentis.local", "senha": "12345678"}
+    )
+    assert resp.status_code == 201

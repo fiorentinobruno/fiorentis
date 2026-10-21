@@ -1,6 +1,12 @@
 import uuid
 
+import email_validator
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+# A migration cria o usuário dono como dono@fiorentis.local quando OWNER_EMAIL não está
+# definido; sem isso o validador recusaria o domínio reservado e a conta não poderia ser
+# reivindicada pelo cadastro.
+email_validator.SPECIAL_USE_DOMAIN_NAMES.remove("local")
 
 
 class _EmailNormalizado(BaseModel):
