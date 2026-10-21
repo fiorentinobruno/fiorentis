@@ -50,6 +50,7 @@ def test_rotas_protegidas_exigem_token(anon_client):
 
 def test_rotas_publicas_continuam_abertas(anon_client):
     assert anon_client.get("/health").status_code == 200
+    assert anon_client.get("/health/db").status_code == 200
     assert anon_client.get("/login").status_code == 200
     assert anon_client.get("/push/public-key").status_code == 200
 

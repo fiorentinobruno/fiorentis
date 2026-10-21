@@ -101,6 +101,12 @@ def estudos_page() -> FileResponse:
 
 
 @app.get("/health")
-def health_check(db: Session = Depends(get_db)) -> dict[str, str]:
+def health_check() -> dict[str, str]:
+    """Liveness sem tocar no banco: é o que o monitor externo chama a cada poucos minutos."""
+    return {"status": "ok"}
+
+
+@app.get("/health/db")
+def health_check_db(db: Session = Depends(get_db)) -> dict[str, str]:
     db.execute(text("SELECT 1"))
     return {"status": "ok"}
