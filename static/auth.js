@@ -65,20 +65,24 @@
     return resp;
   };
 
+  async function desvincularPush() {
+    if (!("serviceWorker" in navigator)) return;
+    const registro = await navigator.serviceWorker.getRegistration();
+    const inscricao = registro && (await registro.pushManager.getSubscription());
+    if (!inscricao) return;
+    // desvincula este navegador da conta antes de perder o token
+    await fetch("/push/unsubscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: inscricao.endpoint }),
+    });
+  }
+
   async function sair() {
+    // no celular essa etapa pode ficar pendente; nunca deixa ela travar o logout
+    const limite = new Promise((resolve) => setTimeout(resolve, 1500));
     try {
-      if ("serviceWorker" in navigator) {
-        const registro = await navigator.serviceWorker.getRegistration();
-        const inscricao = registro && (await registro.pushManager.getSubscription());
-        if (inscricao) {
-          // desvincula este navegador da conta antes de perder o token
-          await fetch("/push/unsubscribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ endpoint: inscricao.endpoint }),
-          });
-        }
-      }
+      await Promise.race([desvincularPush().catch(() => {}), limite]);
     } catch {}
     limparToken();
     location.replace("/login");
