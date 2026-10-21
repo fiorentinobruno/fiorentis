@@ -13,6 +13,7 @@ from app.models import disciplina_model  # noqa: F401
 from app.models import checklist_model  # noqa: F401
 from app.models import dashboard_model  # noqa: F401
 from app.models import projeto_model  # noqa: F401
+from app.models import user_model  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

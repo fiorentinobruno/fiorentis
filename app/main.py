@@ -7,6 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.db.dependencies import get_db
+from app.routers.auth_router import router as auth_router
 from app.routers.checklist_router import router as checklist_router
 from app.routers.dashboard_router import router as dashboard_router
 from app.routers.disciplina_router import router as disciplina_router
@@ -19,6 +20,7 @@ STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(title="Fiorentis")
 
+app.include_router(auth_router)
 app.include_router(item_router)
 app.include_router(push_router)
 app.include_router(disciplina_router)
@@ -46,6 +48,16 @@ def service_worker() -> FileResponse:
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/login")
+def login_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "login.html")
+
+
+@app.get("/cadastro")
+def cadastro_page() -> FileResponse:
+    return FileResponse(STATIC_DIR / "cadastro.html")
 
 
 @app.get("/todos")

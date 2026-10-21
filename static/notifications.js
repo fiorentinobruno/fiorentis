@@ -100,3 +100,21 @@ atualizarEstadoBotao();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js").catch(() => {});
 }
+
+// Se o navegador já tem permissão e inscrição (ex.: outra conta usava este aparelho),
+// vincula a inscrição à conta logada agora, sem pedir nada ao usuário.
+async function sincronizarInscricao() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if (!subscription) return;
+    await fetch("/push/subscribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+  } catch {}
+}
+sincronizarInscricao();

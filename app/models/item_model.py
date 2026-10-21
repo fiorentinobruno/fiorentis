@@ -56,6 +56,9 @@ class Item(Base):
     __tablename__ = "items"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     tipo: Mapped[TipoItem | None] = mapped_column(Enum(TipoItem, name="tipo_item"), nullable=True)
     titulo: Mapped[str] = mapped_column(nullable=False)
     descricao: Mapped[str | None] = mapped_column(nullable=True)

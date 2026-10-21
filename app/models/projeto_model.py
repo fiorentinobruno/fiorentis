@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Enum, Uuid
+from sqlalchemy import ForeignKey, Enum, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base
@@ -19,6 +19,9 @@ class Projeto(Base):
     __tablename__ = "projetos"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     titulo: Mapped[str] = mapped_column(nullable=False)
     status: Mapped[StatusProjeto] = mapped_column(
         Enum(StatusProjeto, name="status_projeto"), nullable=False, default=StatusProjeto.NAO_INICIADO

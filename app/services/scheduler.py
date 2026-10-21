@@ -3,10 +3,12 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy import or_
 
 from app.db.session import SessionLocal
 from app.models.item_model import Item, StatusItem
 from app.models.push_model import DailyPushLog
+from app.models.user_model import User
 from app.services import push_service
 
 logger = logging.getLogger(__name__)
@@ -44,8 +46,9 @@ def verificar_lembretes() -> None:
 
             gatilho = data_alvo - timedelta(minutes=item.lembrete_minutos)
             if gatilho <= agora < data_alvo:
-                push_service.enviar_push_a_todos(
+                push_service.enviar_push_ao_usuario(
                     db,
+                    item.user_id,
                     titulo=item.titulo,
                     corpo=f"Vence às {data_alvo.strftime('%H:%M')}",
                     url="/",
@@ -56,6 +59,15 @@ def verificar_lembretes() -> None:
         db.close()
 
 
+def _ja_enviado(db, user_id, dia, tipo) -> bool:
+    return (
+        db.query(DailyPushLog)
+        .filter(DailyPushLog.user_id == user_id, DailyPushLog.dia == dia, DailyPushLog.tipo == tipo)
+        .first()
+        is not None
+    )
+
+
 def verificar_resumo_diario() -> None:
     db = SessionLocal()
     try:
@@ -64,37 +76,35 @@ def verificar_resumo_diario() -> None:
             return
 
         hoje = agora.date()
-        ja_enviado = (
-            db.query(DailyPushLog)
-            .filter(DailyPushLog.dia == hoje, DailyPushLog.tipo == "resumo_diario")
-            .first()
-        )
-        if ja_enviado:
-            return
-
         hoje_inicio = datetime.combine(hoje, datetime.min.time())
         hoje_fim = hoje_inicio + timedelta(days=1)
-        from sqlalchemy import or_
 
-        itens = (
-            db.query(Item)
-            .filter(
-                or_(
-                    Item.foco_hoje.is_(True),
-                    (Item.data_evento >= hoje_inicio) & (Item.data_evento < hoje_fim),
-                    Item.prazo < hoje_fim,
-                ),
-                Item.status.notin_([StatusItem.ARQUIVADO, StatusItem.FEITO]),
+        for (user_id,) in db.query(User.id).all():
+            if _ja_enviado(db, user_id, hoje, "resumo_diario"):
+                continue
+
+            itens = (
+                db.query(Item)
+                .filter(
+                    Item.user_id == user_id,
+                    or_(
+                        Item.foco_hoje.is_(True),
+                        (Item.data_evento >= hoje_inicio) & (Item.data_evento < hoje_fim),
+                        Item.prazo < hoje_fim,
+                    ),
+                    Item.status.notin_([StatusItem.ARQUIVADO, StatusItem.FEITO]),
+                )
+                .all()
             )
-            .all()
-        )
 
-        if itens:
-            corpo = f"{len(itens)} item{'s' if len(itens) != 1 else ''} pra hoje"
-            push_service.enviar_push_a_todos(db, titulo="Resumo do dia", corpo=corpo, url="/")
+            if itens:
+                corpo = f"{len(itens)} item{'s' if len(itens) != 1 else ''} pra hoje"
+                push_service.enviar_push_ao_usuario(
+                    db, user_id, titulo="Resumo do dia", corpo=corpo, url="/"
+                )
 
-        db.add(DailyPushLog(dia=hoje, tipo="resumo_diario"))
-        db.commit()
+            db.add(DailyPushLog(user_id=user_id, dia=hoje, tipo="resumo_diario"))
+            db.commit()
     finally:
         db.close()
 
@@ -107,23 +117,20 @@ def verificar_fechamento_dia() -> None:
             return
 
         hoje = agora.date()
-        ja_enviado = (
-            db.query(DailyPushLog)
-            .filter(DailyPushLog.dia == hoje, DailyPushLog.tipo == "fechamento_dia")
-            .first()
-        )
-        if ja_enviado:
-            return
+        for (user_id,) in db.query(User.id).all():
+            if _ja_enviado(db, user_id, hoje, "fechamento_dia"):
+                continue
 
-        push_service.enviar_push_a_todos(
-            db,
-            titulo="Fechar o dia",
-            corpo="Dá uma olhada no que ficou pendente antes de virar o dia.",
-            url="/",
-        )
+            push_service.enviar_push_ao_usuario(
+                db,
+                user_id,
+                titulo="Fechar o dia",
+                corpo="Dá uma olhada no que ficou pendente antes de virar o dia.",
+                url="/",
+            )
 
-        db.add(DailyPushLog(dia=hoje, tipo="fechamento_dia"))
-        db.commit()
+            db.add(DailyPushLog(user_id=user_id, dia=hoje, tipo="fechamento_dia"))
+            db.commit()
     finally:
         db.close()
 

@@ -5,7 +5,9 @@ from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.models.checklist_model import ChecklistItem
+from app.models.disciplina_model import Disciplina
 from app.models.item_model import AreaItem, Item, StatusItem, TempoEstimadoItem, TipoItem
+from app.models.projeto_model import Projeto
 from app.schemas.item_schema import ItemCreate, ItemUpdate
 from app.services.data_utils import intervalo_semana
 
@@ -45,19 +47,52 @@ class TituloDuplicadoError(Exception):
         super().__init__(f"Já existe um item ativo com o título '{titulo}'")
 
 
+class ReferenciaInvalidaError(Exception):
+    def __init__(self, campo: str) -> None:
+        self.campo = campo
+        super().__init__(f"{campo} não encontrado")
+
+
 class TempoEstimadoObrigatorioError(Exception):
     def __init__(self) -> None:
         super().__init__("tempo_estimado é obrigatório para itens do tipo tarefa")
 
 
-def _titulo_duplicado(db: Session, titulo: str, ignorar_id: uuid.UUID | None = None) -> bool:
+def _titulo_duplicado(
+    db: Session, user_id: uuid.UUID, titulo: str, ignorar_id: uuid.UUID | None = None
+) -> bool:
     query = db.query(Item).filter(
+        Item.user_id == user_id,
         func.lower(Item.titulo) == titulo.strip().lower(),
         Item.status != StatusItem.ARQUIVADO,
     )
     if ignorar_id is not None:
         query = query.filter(Item.id != ignorar_id)
     return db.query(query.exists()).scalar()
+
+
+def _validar_referencias(
+    db: Session, user_id: uuid.UUID, disciplina_id: uuid.UUID | None, projeto_id: uuid.UUID | None
+) -> None:
+    """Impede anexar o item a uma disciplina/projeto de outro usuário."""
+    if disciplina_id is not None and (
+        db.query(Disciplina.id)
+        .filter(Disciplina.id == disciplina_id, Disciplina.user_id == user_id)
+        .first()
+        is None
+    ):
+        raise ReferenciaInvalidaError("disciplina_id")
+    if projeto_id is not None and (
+        db.query(Projeto.id)
+        .filter(Projeto.id == projeto_id, Projeto.user_id == user_id)
+        .first()
+        is None
+    ):
+        raise ReferenciaInvalidaError("projeto_id")
+
+
+def get_item_do_usuario(db: Session, user_id: uuid.UUID, item_id: uuid.UUID) -> Item | None:
+    return db.query(Item).filter(Item.id == item_id, Item.user_id == user_id).first()
 
 
 def _validar_tempo_estimado(item: Item) -> None:
@@ -83,21 +118,23 @@ def _predicado_dia(dia_inicio: datetime, dia_fim: datetime):
     )
 
 
-def contar_tarefas_dia(db: Session, dia: date) -> tuple[int, int]:
+def contar_tarefas_dia(db: Session, user_id: uuid.UUID, dia: date) -> tuple[int, int]:
     """Retorna (feitas, total) usando o mesmo predicado da view 'hoje'."""
     dia_inicio = datetime.combine(dia, datetime.min.time())
     dia_fim = dia_inicio + timedelta(days=1)
     predicado = _predicado_dia(dia_inicio, dia_fim)
-    total = db.query(Item).filter(predicado).count()
-    feitas = db.query(Item).filter(predicado, Item.status == StatusItem.FEITO).count()
+    base = db.query(Item).filter(Item.user_id == user_id, predicado)
+    total = base.count()
+    feitas = base.filter(Item.status == StatusItem.FEITO).count()
     return feitas, total
 
 
-def create_item(db: Session, data: ItemCreate) -> Item:
-    if _titulo_duplicado(db, data.titulo):
+def create_item(db: Session, user_id: uuid.UUID, data: ItemCreate) -> Item:
+    if _titulo_duplicado(db, user_id, data.titulo):
         raise TituloDuplicadoError(data.titulo)
+    _validar_referencias(db, user_id, data.disciplina_id, data.projeto_id)
 
-    item = Item(**data.model_dump())
+    item = Item(user_id=user_id, **data.model_dump())
     _validar_tempo_estimado(item)
     db.add(item)
     db.commit()
@@ -107,8 +144,8 @@ def create_item(db: Session, data: ItemCreate) -> Item:
     return item
 
 
-def get_item(db: Session, item_id: uuid.UUID) -> Item | None:
-    item = db.get(Item, item_id)
+def get_item(db: Session, user_id: uuid.UUID, item_id: uuid.UUID) -> Item | None:
+    item = get_item_do_usuario(db, user_id, item_id)
     if item is not None:
         _anexar_contagem_checklist(db, [item])
     return item
@@ -116,6 +153,7 @@ def get_item(db: Session, item_id: uuid.UUID) -> Item | None:
 
 def list_items(
     db: Session,
+    user_id: uuid.UUID,
     status: StatusItem | None = None,
     view: str | None = None,
     area: AreaItem | None = None,
@@ -123,7 +161,7 @@ def list_items(
     projeto_id: uuid.UUID | None = None,
     tempo_estimado: TempoEstimadoItem | None = None,
 ) -> list[Item]:
-    query = db.query(Item)
+    query = db.query(Item).filter(Item.user_id == user_id)
 
     if status is not None:
         query = query.filter(Item.status == status)
@@ -166,12 +204,13 @@ def list_items(
 
 
 def list_tarefas_semana_por_disciplina(
-    db: Session, referencia: date
+    db: Session, user_id: uuid.UUID, referencia: date
 ) -> dict[uuid.UUID, list[Item]]:
     semana_inicio, semana_fim = intervalo_semana(referencia)
     itens = (
         db.query(Item)
         .filter(
+            Item.user_id == user_id,
             Item.disciplina_id.isnot(None),
             Item.prazo >= semana_inicio,
             Item.prazo < semana_fim,
@@ -187,16 +226,17 @@ def list_tarefas_semana_por_disciplina(
     return agrupado
 
 
-def update_item(db: Session, item_id: uuid.UUID, data: ItemUpdate) -> Item | None:
-    item = db.get(Item, item_id)
+def update_item(db: Session, user_id: uuid.UUID, item_id: uuid.UUID, data: ItemUpdate) -> Item | None:
+    item = get_item_do_usuario(db, user_id, item_id)
     if item is None:
         return None
 
     status_anterior = item.status
     updates = data.model_dump(exclude_unset=True)
 
-    if "titulo" in updates and _titulo_duplicado(db, updates["titulo"], ignorar_id=item.id):
+    if "titulo" in updates and _titulo_duplicado(db, user_id, updates["titulo"], ignorar_id=item.id):
         raise TituloDuplicadoError(updates["titulo"])
+    _validar_referencias(db, user_id, updates.get("disciplina_id"), updates.get("projeto_id"))
 
     for field, value in updates.items():
         setattr(item, field, value)
@@ -218,8 +258,8 @@ def update_item(db: Session, item_id: uuid.UUID, data: ItemUpdate) -> Item | Non
     return item
 
 
-def delete_item(db: Session, item_id: uuid.UUID) -> bool:
-    item = db.get(Item, item_id)
+def delete_item(db: Session, user_id: uuid.UUID, item_id: uuid.UUID) -> bool:
+    item = get_item_do_usuario(db, user_id, item_id)
     if item is None:
         return False
     db.delete(item)
@@ -228,7 +268,7 @@ def delete_item(db: Session, item_id: uuid.UUID) -> bool:
 
 
 def fechar_dia(
-    db: Session, reagendamentos: dict[uuid.UUID, date] | None = None
+    db: Session, user_id: uuid.UUID, reagendamentos: dict[uuid.UUID, date] | None = None
 ) -> tuple[int, int, int]:
     """Fecha o dia: conta feitas/total de hoje e adia pendências atrasadas/de hoje.
 
@@ -236,12 +276,13 @@ def fechar_dia(
     """
     reagendamentos = reagendamentos or {}
     hoje = datetime.now().date()
-    feitas, total = contar_tarefas_dia(db, hoje)
+    feitas, total = contar_tarefas_dia(db, user_id, hoje)
 
     amanha_inicio = datetime.combine(hoje, datetime.min.time()) + timedelta(days=1)
     pendentes = (
         db.query(Item)
         .filter(
+            Item.user_id == user_id,
             Item.status.in_([StatusItem.A_FAZER, StatusItem.EM_ANDAMENTO]),
             Item.prazo.isnot(None),
             Item.prazo < amanha_inicio,

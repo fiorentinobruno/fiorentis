@@ -1,5 +1,6 @@
 import json
 import logging
+import uuid
 
 from pywebpush import WebPushException, webpush
 from sqlalchemy.orm import Session
@@ -11,9 +12,11 @@ from app.schemas.push_schema import PushSubscriptionCreate
 logger = logging.getLogger(__name__)
 
 
-def subscribe(db: Session, data: PushSubscriptionCreate) -> PushSubscription:
+def subscribe(db: Session, user_id: uuid.UUID, data: PushSubscriptionCreate) -> PushSubscription:
     existente = db.query(PushSubscription).filter(PushSubscription.endpoint == data.endpoint).first()
     if existente:
+        # o mesmo navegador pode trocar de conta: a inscrição passa a pertencer a quem logou agora
+        existente.user_id = user_id
         existente.p256dh = data.keys.p256dh
         existente.auth = data.keys.auth
         db.commit()
@@ -21,7 +24,7 @@ def subscribe(db: Session, data: PushSubscriptionCreate) -> PushSubscription:
         return existente
 
     subscription = PushSubscription(
-        endpoint=data.endpoint, p256dh=data.keys.p256dh, auth=data.keys.auth
+        user_id=user_id, endpoint=data.endpoint, p256dh=data.keys.p256dh, auth=data.keys.auth
     )
     db.add(subscription)
     db.commit()
@@ -29,8 +32,10 @@ def subscribe(db: Session, data: PushSubscriptionCreate) -> PushSubscription:
     return subscription
 
 
-def unsubscribe(db: Session, endpoint: str) -> None:
-    db.query(PushSubscription).filter(PushSubscription.endpoint == endpoint).delete()
+def unsubscribe(db: Session, user_id: uuid.UUID, endpoint: str) -> None:
+    db.query(PushSubscription).filter(
+        PushSubscription.endpoint == endpoint, PushSubscription.user_id == user_id
+    ).delete()
     db.commit()
 
 
@@ -55,6 +60,8 @@ def enviar_push(db: Session, subscription: PushSubscription, titulo: str, corpo:
             logger.warning("Falha ao enviar push: %s", exc)
 
 
-def enviar_push_a_todos(db: Session, titulo: str, corpo: str, url: str = "/") -> None:
-    for subscription in db.query(PushSubscription).all():
+def enviar_push_ao_usuario(
+    db: Session, user_id: uuid.UUID, titulo: str, corpo: str, url: str = "/"
+) -> None:
+    for subscription in db.query(PushSubscription).filter(PushSubscription.user_id == user_id).all():
         enviar_push(db, subscription, titulo, corpo, url)

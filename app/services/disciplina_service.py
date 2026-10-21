@@ -10,8 +10,16 @@ def _query_com_horarios(db: Session):
     return db.query(Disciplina).options(selectinload(Disciplina.horarios))
 
 
-def create_disciplina(db: Session, data: DisciplinaCreate) -> Disciplina:
-    disciplina = Disciplina(nome=data.nome, professor=data.professor, cor=data.cor)
+def _get_simples(db: Session, user_id: uuid.UUID, disciplina_id: uuid.UUID) -> Disciplina | None:
+    return (
+        db.query(Disciplina)
+        .filter(Disciplina.id == disciplina_id, Disciplina.user_id == user_id)
+        .first()
+    )
+
+
+def create_disciplina(db: Session, user_id: uuid.UUID, data: DisciplinaCreate) -> Disciplina:
+    disciplina = Disciplina(user_id=user_id, nome=data.nome, professor=data.professor, cor=data.cor)
     db.add(disciplina)
     db.flush()
 
@@ -23,16 +31,22 @@ def create_disciplina(db: Session, data: DisciplinaCreate) -> Disciplina:
     return _query_com_horarios(db).filter(Disciplina.id == disciplina.id).one()
 
 
-def list_disciplinas(db: Session) -> list[Disciplina]:
-    return _query_com_horarios(db).order_by(Disciplina.nome).all()
+def list_disciplinas(db: Session, user_id: uuid.UUID) -> list[Disciplina]:
+    return _query_com_horarios(db).filter(Disciplina.user_id == user_id).order_by(Disciplina.nome).all()
 
 
-def get_disciplina(db: Session, disciplina_id: uuid.UUID) -> Disciplina | None:
-    return _query_com_horarios(db).filter(Disciplina.id == disciplina_id).first()
+def get_disciplina(db: Session, user_id: uuid.UUID, disciplina_id: uuid.UUID) -> Disciplina | None:
+    return (
+        _query_com_horarios(db)
+        .filter(Disciplina.id == disciplina_id, Disciplina.user_id == user_id)
+        .first()
+    )
 
 
-def update_disciplina(db: Session, disciplina_id: uuid.UUID, data: DisciplinaUpdate) -> Disciplina | None:
-    disciplina = db.get(Disciplina, disciplina_id)
+def update_disciplina(
+    db: Session, user_id: uuid.UUID, disciplina_id: uuid.UUID, data: DisciplinaUpdate
+) -> Disciplina | None:
+    disciplina = _get_simples(db, user_id, disciplina_id)
     if disciplina is None:
         return None
 
@@ -52,8 +66,8 @@ def update_disciplina(db: Session, disciplina_id: uuid.UUID, data: DisciplinaUpd
     return _query_com_horarios(db).filter(Disciplina.id == disciplina_id).one()
 
 
-def delete_disciplina(db: Session, disciplina_id: uuid.UUID) -> bool:
-    disciplina = db.get(Disciplina, disciplina_id)
+def delete_disciplina(db: Session, user_id: uuid.UUID, disciplina_id: uuid.UUID) -> bool:
+    disciplina = _get_simples(db, user_id, disciplina_id)
     if disciplina is None:
         return False
     db.delete(disciplina)

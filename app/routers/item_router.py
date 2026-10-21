@@ -4,7 +4,9 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.auth import get_current_user
 from app.db.dependencies import get_db
+from app.models.user_model import User
 from app.models.item_model import AreaItem, StatusItem, TempoEstimadoItem
 from app.schemas.item_schema import (
     FechamentoDiaRequest,
@@ -14,18 +16,22 @@ from app.schemas.item_schema import (
     ItemUpdate,
 )
 from app.services import item_service
-from app.services.item_service import TempoEstimadoObrigatorioError, TituloDuplicadoError
+from app.services.item_service import (
+    ReferenciaInvalidaError,
+    TempoEstimadoObrigatorioError,
+    TituloDuplicadoError,
+)
 
 router = APIRouter(prefix="/items", tags=["items"])
 
 
 @router.post("", response_model=ItemRead, status_code=201)
-def create_item(data: ItemCreate, db: Session = Depends(get_db)) -> ItemRead:
+def create_item(data: ItemCreate, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ItemRead:
     try:
-        return item_service.create_item(db, data)
+        return item_service.create_item(db, user.id, data)
     except TituloDuplicadoError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except TempoEstimadoObrigatorioError as exc:
+    except (TempoEstimadoObrigatorioError, ReferenciaInvalidaError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
@@ -37,10 +43,11 @@ def list_items(
     disciplina_id: uuid.UUID | None = None,
     projeto_id: uuid.UUID | None = None,
     tempo_estimado: TempoEstimadoItem | None = None,
-    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user), db: Session = Depends(get_db),
 ) -> list[ItemRead]:
     return item_service.list_items(
         db,
+        user.id,
         status=status,
         view=view,
         area=area,
@@ -52,34 +59,34 @@ def list_items(
 
 @router.get("/semana-por-disciplina", response_model=dict[uuid.UUID, list[ItemRead]])
 def semana_por_disciplina(
-    referencia: date | None = None, db: Session = Depends(get_db)
+    referencia: date | None = None, user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> dict[uuid.UUID, list[ItemRead]]:
-    return item_service.list_tarefas_semana_por_disciplina(db, referencia or date.today())
+    return item_service.list_tarefas_semana_por_disciplina(db, user.id, referencia or date.today())
 
 
 @router.post("/fechar-dia", response_model=FechamentoDiaResumo)
 def fechar_dia(
-    data: FechamentoDiaRequest = FechamentoDiaRequest(), db: Session = Depends(get_db)
+    data: FechamentoDiaRequest = FechamentoDiaRequest(), user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ) -> FechamentoDiaResumo:
-    feitas, total, reagendados = item_service.fechar_dia(db, data.reagendamentos)
+    feitas, total, reagendados = item_service.fechar_dia(db, user.id, data.reagendamentos)
     return FechamentoDiaResumo(feitas_hoje=feitas, total_hoje=total, itens_reagendados=reagendados)
 
 
 @router.get("/{item_id}", response_model=ItemRead)
-def get_item(item_id: uuid.UUID, db: Session = Depends(get_db)) -> ItemRead:
-    item = item_service.get_item(db, item_id)
+def get_item(item_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ItemRead:
+    item = item_service.get_item(db, user.id, item_id)
     if item is None:
         raise HTTPException(status_code=404, detail="Item não encontrado")
     return item
 
 
 @router.patch("/{item_id}", response_model=ItemRead)
-def update_item(item_id: uuid.UUID, data: ItemUpdate, db: Session = Depends(get_db)) -> ItemRead:
+def update_item(item_id: uuid.UUID, data: ItemUpdate, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> ItemRead:
     try:
-        item = item_service.update_item(db, item_id, data)
+        item = item_service.update_item(db, user.id, item_id, data)
     except TituloDuplicadoError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except TempoEstimadoObrigatorioError as exc:
+    except (TempoEstimadoObrigatorioError, ReferenciaInvalidaError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     if item is None:
         raise HTTPException(status_code=404, detail="Item não encontrado")
@@ -87,7 +94,7 @@ def update_item(item_id: uuid.UUID, data: ItemUpdate, db: Session = Depends(get_
 
 
 @router.delete("/{item_id}", status_code=204)
-def delete_item(item_id: uuid.UUID, db: Session = Depends(get_db)) -> None:
-    deleted = item_service.delete_item(db, item_id)
+def delete_item(item_id: uuid.UUID, user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> None:
+    deleted = item_service.delete_item(db, user.id, item_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Item não encontrado")

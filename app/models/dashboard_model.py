@@ -13,6 +13,9 @@ class DailyChecklistItem(Base):
     __tablename__ = "daily_checklist_items"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     titulo: Mapped[str] = mapped_column(String, nullable=False)
     ordem: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     ativo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
@@ -40,6 +43,9 @@ class DailyQuote(Base):
     __tablename__ = "daily_quotes"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     texto: Mapped[str] = mapped_column(String, nullable=False)
     is_fallback: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     data_alvo: Mapped[date | None] = mapped_column(Date, nullable=True)

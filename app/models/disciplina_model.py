@@ -11,6 +11,9 @@ class Disciplina(Base):
     __tablename__ = "disciplinas"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     nome: Mapped[str] = mapped_column(nullable=False)
     professor: Mapped[str | None] = mapped_column(nullable=True)
     cor: Mapped[str | None] = mapped_column(nullable=True)

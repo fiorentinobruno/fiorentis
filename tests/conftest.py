@@ -26,6 +26,7 @@ from app.models import (  # noqa: F401
     item_model,
     projeto_model,
     push_model,
+    user_model,
 )
 
 TEST_DB_NAME = "fiorentis_test_db"
@@ -60,6 +61,8 @@ def _ensure_test_database_exists() -> None:
 def engine():
     _ensure_test_database_exists()
     engine = create_engine(_test_database_url())
+    # banco dedicado a testes: recria o schema a cada execução para acompanhar mudanças nos models
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield engine
     engine.dispose()
@@ -80,9 +83,19 @@ def db_session(engine):
         connection.close()
 
 
+def _novo_client(email: str) -> TestClient:
+    """Client com um usuário recém-cadastrado já autenticado."""
+    test_client = TestClient(app)
+    resp = test_client.post("/auth/register", json={"email": email, "senha": "senha-segura-123"})
+    assert resp.status_code == 201, resp.text
+    test_client.headers["Authorization"] = f"Bearer {resp.json()['access_token']}"
+    return test_client
+
+
 @pytest.fixture()
-def client(db_session):
-    """
+def anon_client(db_session):
+    """Client sem autenticação (para testar /auth e rotas protegidas).
+
     Deliberately does NOT enter TestClient as a context manager: doing so
     would run the app's startup event, which starts the real APScheduler
     background jobs (scheduler.py) against the actual dev database via
@@ -93,6 +106,17 @@ def client(db_session):
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
-    test_client = TestClient(app)
-    yield test_client
+    yield TestClient(app)
     app.dependency_overrides.clear()
+
+
+@pytest.fixture()
+def client(anon_client):
+    """Client autenticado como o usuário A."""
+    return _novo_client("a@exemplo.com")
+
+
+@pytest.fixture()
+def client_b(anon_client):
+    """Client autenticado como o usuário B — para testes de isolamento."""
+    return _novo_client("b@exemplo.com")

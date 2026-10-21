@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Criar conta — Fiorentis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="/static/theme.css?v=1792601774" />
+</head>
+<body class="bg-slate-950 text-slate-300 min-h-screen flex items-center justify-center px-4">
+  <main class="w-full max-w-sm">
+    <h1 class="logo-fiorentis text-3xl text-white text-center mb-6">Fiorentis</h1>
+    <form id="form" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4" novalidate>
+      <h2 class="text-lg font-semibold text-white">Criar conta</h2>
+      <div>
+        <label for="email" class="block text-sm text-slate-400 mb-1">Email</label>
+        <input id="email" type="email" autocomplete="email" required
+          class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2.5 text-base text-white focus:outline-none focus:border-[color:var(--accent)]" />
+      </div>
+      <div>
+        <label for="senha" class="block text-sm text-slate-400 mb-1">Senha</label>
+        <input id="senha" type="password" autocomplete="new-password" required minlength="8" maxlength="72"
+          class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2.5 text-base text-white focus:outline-none focus:border-[color:var(--accent)]" />
+      </div>
+      <div>
+        <label for="codigo" class="block text-sm text-slate-400 mb-1">Código de acesso</label>
+        <input id="codigo" type="password" autocomplete="off"
+          class="w-full rounded-lg bg-slate-950 border border-slate-700 px-3 py-2.5 text-base text-white focus:outline-none focus:border-[color:var(--accent)]" />
+        <p class="text-xs text-slate-500 mt-1">Peça a quem te convidou. Deixe vazio se não houver.</p>
+      </div>
+      <p id="erro" class="hidden text-sm text-red-400" role="alert"></p>
+      <button id="enviar" type="submit"
+        class="w-full rounded-lg bg-[color:var(--accent)] text-white font-semibold py-2.5 active:scale-[0.98] transition disabled:opacity-50">Criar conta</button>
+      <p class="text-sm text-slate-400 text-center">Já tem conta? <a href="/login" class="text-[color:var(--accent-soft)] underline">Entrar</a></p>
+    </form>
+  </main>
+  <script src="/static/auth.js?v=1792601774"></script>
+  <script src="/static/cadastro.js?v=1792601774"></script>
+</body>
+</html>

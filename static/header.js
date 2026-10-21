@@ -103,6 +103,7 @@ function initHeader({ menu, pagina, titulo, extra }) {
         <div class="flex items-center gap-3">
           ${extra || ""}
           <p class="hidden sm:block text-sm text-slate-400" id="header-info"></p>
+          <button type="button" id="btn-sair" class="hidden sm:block text-sm text-slate-400 hover:text-white px-2 py-1 rounded-md hover:bg-slate-800">Sair</button>
           <button type="button" id="btn-abrir-menu-mobile"
             class="sm:hidden -mr-1.5 w-10 h-10 flex items-center justify-center rounded-lg text-slate-300 active:bg-slate-800 transition-colors"
             aria-label="Abrir menu" aria-expanded="false">
@@ -129,6 +130,9 @@ function initHeader({ menu, pagina, titulo, extra }) {
         </button>
       </div>
       <nav class="flex-1 overflow-y-auto px-2.5 py-4">${gruposDrawerHtml}</nav>
+      <div class="px-2.5 py-3 border-t border-slate-800">
+        <button type="button" id="btn-sair-mobile" class="w-full text-left px-3.5 py-2.5 rounded-xl text-sm text-slate-300 active:bg-slate-800">Sair</button>
+      </div>
     </aside>`;
 
   // --- Dropdowns desktop ---
@@ -167,6 +171,10 @@ function initHeader({ menu, pagina, titulo, extra }) {
     drawer.classList.add("translate-x-full");
     btnAbrir.setAttribute("aria-expanded", "false");
   }
+
+  ["btn-sair", "btn-sair-mobile"].forEach((id) => {
+    document.getElementById(id).addEventListener("click", () => Auth.sair());
+  });
 
   btnAbrir.addEventListener("click", abrirMenuMobile);
   btnFechar.addEventListener("click", fecharMenuMobile);

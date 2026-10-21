@@ -29,7 +29,7 @@ _ORDEM_PRIORIDADE = {
 }
 
 
-def list_agenda_hoje(db: Session, limite: int = 3) -> list[Item]:
+def list_agenda_hoje(db: Session, user_id: uuid.UUID, limite: int = 3) -> list[Item]:
     hoje = datetime.now().date()
     hoje_inicio = datetime.combine(hoje, datetime.min.time())
     hoje_fim = hoje_inicio + timedelta(days=1)
@@ -37,6 +37,7 @@ def list_agenda_hoje(db: Session, limite: int = 3) -> list[Item]:
     itens = (
         db.query(Item)
         .filter(
+            Item.user_id == user_id,
             Item.status != StatusItem.ARQUIVADO,
             Item.status != StatusItem.FEITO,
             or_(
@@ -60,8 +61,8 @@ def list_agenda_hoje(db: Session, limite: int = 3) -> list[Item]:
     return itens[:limite]
 
 
-def concluir_item_agenda(db: Session, item_id: uuid.UUID) -> Item | None:
-    item = db.get(Item, item_id)
+def concluir_item_agenda(db: Session, user_id: uuid.UUID, item_id: uuid.UUID) -> Item | None:
+    item = item_service.get_item_do_usuario(db, user_id, item_id)
     if item is None:
         return None
     item.status = StatusItem.FEITO
@@ -71,28 +72,45 @@ def concluir_item_agenda(db: Session, item_id: uuid.UUID) -> Item | None:
     return item
 
 
-def create_daily_checklist_item(db: Session, data: DailyChecklistItemCreate) -> DailyChecklistItem:
-    maior_ordem = db.query(func.max(DailyChecklistItem.ordem)).scalar() or 0
-    item = DailyChecklistItem(titulo=data.titulo, ordem=maior_ordem + 1)
+def _get_checklist_item(
+    db: Session, user_id: uuid.UUID, item_id: uuid.UUID
+) -> DailyChecklistItem | None:
+    return (
+        db.query(DailyChecklistItem)
+        .filter(DailyChecklistItem.id == item_id, DailyChecklistItem.user_id == user_id)
+        .first()
+    )
+
+
+def create_daily_checklist_item(
+    db: Session, user_id: uuid.UUID, data: DailyChecklistItemCreate
+) -> DailyChecklistItem:
+    maior_ordem = (
+        db.query(func.max(DailyChecklistItem.ordem))
+        .filter(DailyChecklistItem.user_id == user_id)
+        .scalar()
+        or 0
+    )
+    item = DailyChecklistItem(user_id=user_id, titulo=data.titulo, ordem=maior_ordem + 1)
     db.add(item)
     db.commit()
     db.refresh(item)
     return item
 
 
-def list_daily_checklist_items_ativos(db: Session) -> list[DailyChecklistItem]:
+def list_daily_checklist_items_ativos(db: Session, user_id: uuid.UUID) -> list[DailyChecklistItem]:
     return (
         db.query(DailyChecklistItem)
-        .filter(DailyChecklistItem.ativo.is_(True))
+        .filter(DailyChecklistItem.user_id == user_id, DailyChecklistItem.ativo.is_(True))
         .order_by(DailyChecklistItem.ordem)
         .all()
     )
 
 
 def update_daily_checklist_item(
-    db: Session, item_id: uuid.UUID, data: DailyChecklistItemUpdate
+    db: Session, user_id: uuid.UUID, item_id: uuid.UUID, data: DailyChecklistItemUpdate
 ) -> DailyChecklistItem | None:
-    item = db.get(DailyChecklistItem, item_id)
+    item = _get_checklist_item(db, user_id, item_id)
     if item is None:
         return None
     updates = data.model_dump(exclude_unset=True)
@@ -103,18 +121,23 @@ def update_daily_checklist_item(
     return item
 
 
-def get_checklist_semana(db: Session, referencia: date) -> ChecklistSemanaRead:
+def get_checklist_semana(db: Session, user_id: uuid.UUID, referencia: date) -> ChecklistSemanaRead:
     semana_inicio, semana_fim = _semana_para_data(referencia)
 
     itens_com_log_na_semana = (
         db.query(DailyChecklistItem.id)
         .join(DailyChecklistLog, DailyChecklistLog.item_id == DailyChecklistItem.id)
-        .filter(DailyChecklistLog.data >= semana_inicio, DailyChecklistLog.data <= semana_fim)
+        .filter(
+            DailyChecklistItem.user_id == user_id,
+            DailyChecklistLog.data >= semana_inicio,
+            DailyChecklistLog.data <= semana_fim,
+        )
         .distinct()
     )
     itens = (
         db.query(DailyChecklistItem)
         .filter(
+            DailyChecklistItem.user_id == user_id,
             or_(
                 DailyChecklistItem.ativo.is_(True),
                 DailyChecklistItem.id.in_(itens_com_log_na_semana),
@@ -126,7 +149,12 @@ def get_checklist_semana(db: Session, referencia: date) -> ChecklistSemanaRead:
 
     logs = (
         db.query(DailyChecklistLog)
-        .filter(DailyChecklistLog.data >= semana_inicio, DailyChecklistLog.data <= semana_fim)
+        .join(DailyChecklistItem, DailyChecklistItem.id == DailyChecklistLog.item_id)
+        .filter(
+            DailyChecklistItem.user_id == user_id,
+            DailyChecklistLog.data >= semana_inicio,
+            DailyChecklistLog.data <= semana_fim,
+        )
         .all()
     )
     logs_por_item: dict[uuid.UUID, dict[date, bool]] = {}
@@ -147,8 +175,10 @@ def get_checklist_semana(db: Session, referencia: date) -> ChecklistSemanaRead:
     return ChecklistSemanaRead(semana_inicio=semana_inicio, semana_fim=semana_fim, linhas=linhas)
 
 
-def toggle_checklist_log(db: Session, item_id: uuid.UUID, dia: date) -> DailyChecklistLog | None:
-    if db.get(DailyChecklistItem, item_id) is None:
+def toggle_checklist_log(
+    db: Session, user_id: uuid.UUID, item_id: uuid.UUID, dia: date
+) -> DailyChecklistLog | None:
+    if _get_checklist_item(db, user_id, item_id) is None:
         return None
 
     log = (
@@ -168,13 +198,15 @@ def toggle_checklist_log(db: Session, item_id: uuid.UUID, dia: date) -> DailyChe
     return log
 
 
-def get_grafico_checklist(db: Session, dias: int) -> list[GraficoPonto]:
+def get_grafico_checklist(db: Session, user_id: uuid.UUID, dias: int) -> list[GraficoPonto]:
     hoje = datetime.now().date()
     inicio = hoje - timedelta(days=dias - 1)
 
     contagens = dict(
         db.query(DailyChecklistLog.data, func.count(DailyChecklistLog.id))
+        .join(DailyChecklistItem, DailyChecklistItem.id == DailyChecklistLog.item_id)
         .filter(
+            DailyChecklistItem.user_id == user_id,
             DailyChecklistLog.feito.is_(True),
             DailyChecklistLog.data >= inicio,
             DailyChecklistLog.data <= hoje,
@@ -190,36 +222,44 @@ def get_grafico_checklist(db: Session, dias: int) -> list[GraficoPonto]:
     return pontos
 
 
-def get_frase_do_dia(db: Session) -> DailyQuote | None:
+def get_frase_do_dia(db: Session, user_id: uuid.UUID) -> DailyQuote | None:
     hoje = datetime.now().date()
-    especifica = db.query(DailyQuote).filter(DailyQuote.data_alvo == hoje).first()
+    especifica = (
+        db.query(DailyQuote)
+        .filter(DailyQuote.user_id == user_id, DailyQuote.data_alvo == hoje)
+        .first()
+    )
     if especifica is not None:
         return especifica
     return (
         db.query(DailyQuote)
-        .filter(DailyQuote.is_fallback.is_(True))
+        .filter(DailyQuote.user_id == user_id, DailyQuote.is_fallback.is_(True))
         .order_by(func.random())
         .first()
     )
 
 
-def list_quotes(db: Session) -> list[DailyQuote]:
-    return db.query(DailyQuote).order_by(DailyQuote.criado_em.desc()).all()
+def list_quotes(db: Session, user_id: uuid.UUID) -> list[DailyQuote]:
+    return db.query(DailyQuote).filter(DailyQuote.user_id == user_id).order_by(DailyQuote.criado_em.desc()).all()
 
 
-def create_fallback_quote(db: Session, data: DailyQuoteCreate) -> DailyQuote:
-    quote = DailyQuote(texto=data.texto, is_fallback=True, data_alvo=None)
+def create_fallback_quote(db: Session, user_id: uuid.UUID, data: DailyQuoteCreate) -> DailyQuote:
+    quote = DailyQuote(user_id=user_id, texto=data.texto, is_fallback=True, data_alvo=None)
     db.add(quote)
     db.commit()
     db.refresh(quote)
     return quote
 
 
-def set_frase_amanha(db: Session, data: DailyQuoteCreate) -> DailyQuote:
+def set_frase_amanha(db: Session, user_id: uuid.UUID, data: DailyQuoteCreate) -> DailyQuote:
     amanha = datetime.now().date() + timedelta(days=1)
-    quote = db.query(DailyQuote).filter(DailyQuote.data_alvo == amanha).first()
+    quote = (
+        db.query(DailyQuote)
+        .filter(DailyQuote.user_id == user_id, DailyQuote.data_alvo == amanha)
+        .first()
+    )
     if quote is None:
-        quote = DailyQuote(texto=data.texto, is_fallback=False, data_alvo=amanha)
+        quote = DailyQuote(user_id=user_id, texto=data.texto, is_fallback=False, data_alvo=amanha)
         db.add(quote)
     else:
         quote.texto = data.texto
@@ -228,8 +268,12 @@ def set_frase_amanha(db: Session, data: DailyQuoteCreate) -> DailyQuote:
     return quote
 
 
-def delete_quote(db: Session, quote_id: uuid.UUID) -> bool:
-    quote = db.get(DailyQuote, quote_id)
+def delete_quote(db: Session, user_id: uuid.UUID, quote_id: uuid.UUID) -> bool:
+    quote = (
+        db.query(DailyQuote)
+        .filter(DailyQuote.id == quote_id, DailyQuote.user_id == user_id)
+        .first()
+    )
     if quote is None:
         return False
     db.delete(quote)
@@ -237,23 +281,25 @@ def delete_quote(db: Session, quote_id: uuid.UUID) -> bool:
     return True
 
 
-def _contar_eventos(db: Session, inicio: datetime, fim: datetime) -> int:
+def _contar_eventos(db: Session, user_id: uuid.UUID, inicio: datetime, fim: datetime) -> int:
     return (
         db.query(Item)
-        .filter(Item.tipo == TipoItem.EVENTO, Item.data_evento >= inicio, Item.data_evento < fim)
+        .filter(Item.user_id == user_id, Item.tipo == TipoItem.EVENTO, Item.data_evento >= inicio, Item.data_evento < fim)
         .count()
     )
 
 
-def _contar_checklist(db: Session, dia_inicio: date, dia_fim: date) -> tuple[int, int]:
+def _contar_checklist(db: Session, user_id: uuid.UUID, dia_inicio: date, dia_fim: date) -> tuple[int, int]:
     ativos_total = db.query(func.count(DailyChecklistItem.id)).filter(
-        DailyChecklistItem.ativo.is_(True)
+        DailyChecklistItem.user_id == user_id, DailyChecklistItem.ativo.is_(True)
     ).scalar() or 0
     dias = (dia_fim - dia_inicio).days + 1
     total = ativos_total * dias
     feitos = (
         db.query(func.count(DailyChecklistLog.id))
+        .join(DailyChecklistItem, DailyChecklistItem.id == DailyChecklistLog.item_id)
         .filter(
+            DailyChecklistItem.user_id == user_id,
             DailyChecklistLog.feito.is_(True),
             DailyChecklistLog.data >= dia_inicio,
             DailyChecklistLog.data <= dia_fim,
@@ -264,13 +310,13 @@ def _contar_checklist(db: Session, dia_inicio: date, dia_fim: date) -> tuple[int
     return feitos, total
 
 
-def get_resumo_hoje(db: Session) -> ResumoPeriodo:
+def get_resumo_hoje(db: Session, user_id: uuid.UUID) -> ResumoPeriodo:
     hoje = datetime.now().date()
-    feitas, total = item_service.contar_tarefas_dia(db, hoje)
+    feitas, total = item_service.contar_tarefas_dia(db, user_id, hoje)
     hoje_inicio = datetime.combine(hoje, datetime.min.time())
     hoje_fim = hoje_inicio + timedelta(days=1)
-    eventos = _contar_eventos(db, hoje_inicio, hoje_fim)
-    checklist_feitos, checklist_total = _contar_checklist(db, hoje, hoje)
+    eventos = _contar_eventos(db, user_id, hoje_inicio, hoje_fim)
+    checklist_feitos, checklist_total = _contar_checklist(db, user_id, hoje, hoje)
     return ResumoPeriodo(
         tarefas_feitas=feitas,
         tarefas_pendentes=total - feitas,
@@ -280,7 +326,7 @@ def get_resumo_hoje(db: Session) -> ResumoPeriodo:
     )
 
 
-def get_resumo_semana(db: Session) -> ResumoPeriodo:
+def get_resumo_semana(db: Session, user_id: uuid.UUID) -> ResumoPeriodo:
     hoje = datetime.now().date()
     semana_inicio, semana_fim = _semana_para_data(hoje)
     semana_inicio_dt, semana_fim_dt = intervalo_semana(hoje)
@@ -289,12 +335,12 @@ def get_resumo_semana(db: Session) -> ResumoPeriodo:
     total = 0
     for i in range((semana_fim - semana_inicio).days + 1):
         dia = semana_inicio + timedelta(days=i)
-        f, t = item_service.contar_tarefas_dia(db, dia)
+        f, t = item_service.contar_tarefas_dia(db, user_id, dia)
         feitas += f
         total += t
 
-    eventos = _contar_eventos(db, semana_inicio_dt, semana_fim_dt)
-    checklist_feitos, checklist_total = _contar_checklist(db, semana_inicio, semana_fim)
+    eventos = _contar_eventos(db, user_id, semana_inicio_dt, semana_fim_dt)
+    checklist_feitos, checklist_total = _contar_checklist(db, user_id, semana_inicio, semana_fim)
     return ResumoPeriodo(
         tarefas_feitas=feitas,
         tarefas_pendentes=total - feitas,
@@ -304,5 +350,7 @@ def get_resumo_semana(db: Session) -> ResumoPeriodo:
     )
 
 
-def get_resumo_dashboard(db: Session) -> ResumoDashboardRead:
-    return ResumoDashboardRead(hoje=get_resumo_hoje(db), semana=get_resumo_semana(db))
+def get_resumo_dashboard(db: Session, user_id: uuid.UUID) -> ResumoDashboardRead:
+    return ResumoDashboardRead(
+        hoje=get_resumo_hoje(db, user_id), semana=get_resumo_semana(db, user_id)
+    )

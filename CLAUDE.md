@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Fiorentis is a **single-user personal organization app** (tasks, agenda, daily checklist, class schedule). No multi-tenancy, no JWT — see "Auth" below. Backend is FastAPI + PostgreSQL + SQLAlchemy 2.x + Alembic, dependency-managed with `uv`. Frontend is plain HTML + Tailwind (CDN) + vanilla JS — no build step, no framework.
+Fiorentis is a **multi-user personal organization app** (tasks, agenda, daily checklist, class schedule). Each user only sees their own data — see "Auth & multi-tenancy" below. Backend is FastAPI + PostgreSQL + SQLAlchemy 2.x + Alembic, dependency-managed with `uv`. Frontend is plain HTML + Tailwind (CDN) + vanilla JS — no build step, no framework.
 
 `BRIEF.md` has the original product spec (data model rationale, design principles) if you need historical context on *why* something was modeled a certain way.
 
@@ -20,6 +20,12 @@ uv run uvicorn app.main:app --reload
 # Dependencies
 uv sync
 
+# Tests (real Postgres, separate fiorentis_test_db; schema is recreated each run)
+uv run pytest
+
+# Set/create a user's password manually
+uv run python -m scripts.definir_senha <email> <senha>
+
 # Migrations
 uv run alembic revision --autogenerate -m "description"
 uv run alembic upgrade head
@@ -29,13 +35,22 @@ uv run alembic downgrade -1
 docker-compose up -d
 ```
 
-There is no test suite, linter, or frontend build step in this repo currently.
+There is a pytest suite (`tests/`), but no linter or frontend build step.
 
-Config comes from `.env` (see `.env.example`), loaded via `app/core/config.py` (`pydantic-settings`). Required: `DATABASE_URL`. Optional: `APP_PASSWORD` (only needed if exposing the app beyond localhost/LAN — not needed for local dev), `VAPID_*` (web push).
+Config comes from `.env` (see `.env.example`), loaded via `app/core/config.py` (`pydantic-settings`). Required: `DATABASE_URL`, `SECRET_KEY` (signs JWTs; Render generates it). Optional: `APP_PASSWORD` (access code required at sign-up, to keep bots out; empty = open sign-up), `VAPID_*` (web push). `OWNER_EMAIL` is read only by the `d4e8a1c27b90` migration.
 
 Deploys to Render (`render.yaml`): build runs `uv sync --frozen && alembic upgrade head`, start runs uvicorn.
 
 ## Architecture
+
+### Auth & multi-tenancy
+
+- `POST /auth/register` (needs `codigo_acesso` == `APP_PASSWORD` when that is set) and `POST /auth/login` return a 7-day HS256 JWT. bcrypt hashes, password limited to 8–72 chars (bcrypt's 72-byte limit). `app/core/security.py` has hashing/JWT, `app/core/auth.py` has the `get_current_user` dependency.
+- **Every data route takes `user: User = Depends(get_current_user)` and passes `user.id` as the first argument after `db` to the service.** Services must filter by `user_id` on every query, including by-id lookups (never `db.get(Model, id)` on user data — use an owned lookup, otherwise it's an IDOR). Child tables without their own `user_id` (`ChecklistItem`, `HorarioAula`, `DailyChecklistLog`) are scoped by joining through the parent. Item create/update validate that `disciplina_id`/`projeto_id` belong to the user.
+- Tables with `user_id` (FK to `users`, cascade delete): `items`, `disciplinas`, `projetos`, `daily_checklist_items`, `daily_quotes`, `push_subscriptions`, `daily_push_log`. New user-owned tables must follow suit and get an isolation test in `tests/test_isolamento.py`.
+- Public routes: HTML page routes, `/health`, `/static`, `/manifest.json`, `/service-worker.js`, `/push/public-key`, `/auth/login`, `/auth/register`.
+- The migration assigns pre-existing data to an owner user (`OWNER_EMAIL`, default `dono@fiorentis.local`) with no password; registering with that email once claims the account.
+- Scheduler jobs loop over users; push is sent per user (`push_service.enviar_push_ao_usuario`). Timezone is still fixed to America/Sao_Paulo.
 
 ### Layering (backend)
 
@@ -65,6 +80,6 @@ The "Hoje" (home) view and the dashboard's "agenda" both query `Item` for what's
 
 ### Frontend conventions
 
-Each page is `static/<page>.html` + `static/<page>.js`, sharing `static/header.js` (renders the dropdown nav — has a hardcoded `MENUS` array that must be updated when adding a page) and `static/shared.js` (shared helpers: `renderItem()` for the standard task-card UI, area/priority color maps, date formatters). `static/theme.css` holds theme tokens (`--accent`, `--accent-soft`) used via Tailwind's `text-[color:var(--accent)]` pattern — keep new UI on this token instead of hardcoding colors, and prefer reusing `renderItem`/`shared.js` helpers over building new card markup for `Item`-based data.
+Each page is `static/<page>.html` + `static/<page>.js`, sharing `static/auth.js` (must be the first script on every protected page: stores the JWT in `localStorage`, patches `window.fetch` to add the Bearer header for same-origin calls and redirect to `/login` on 401, exposes `Auth.sair()`), `static/header.js` (renders the dropdown nav — has a hardcoded `MENUS` array that must be updated when adding a page) and `static/shared.js` (shared helpers: `renderItem()` for the standard task-card UI, area/priority color maps, date formatters). `static/theme.css` holds theme tokens (`--accent`, `--accent-soft`) used via Tailwind's `text-[color:var(--accent)]` pattern — keep new UI on this token instead of hardcoding colors, and prefer reusing `renderItem`/`shared.js` helpers over building new card markup for `Item`-based data.
 
 Static assets are cache-busted with a shared `?v=<unix timestamp>` query string appended to every `<script src>`/`<link href>` across all HTML files — when changing any shared static file (`header.js`, `shared.js`, `theme.css`, etc.), bump that timestamp on **all** HTML pages together (they're kept in sync to one value), or browsers will keep serving a stale cached copy.
