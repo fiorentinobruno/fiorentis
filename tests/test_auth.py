@@ -72,3 +72,8 @@ def test_email_placeholder_do_dono_e_aceito(anon_client):
         "/auth/register", json={"email": "dono@fiorentis.local", "senha": "12345678"}
     )
     assert resp.status_code == 201
+
+
+def test_respostas_json_nao_sao_cacheaveis(client):
+    assert client.get("/disciplinas").headers["cache-control"] == "no-store"
+    assert "cache-control" not in client.get("/login").headers

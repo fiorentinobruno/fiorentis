@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -19,6 +19,16 @@ from app.services.scheduler import iniciar_scheduler
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 app = FastAPI(title="Fiorentis")
+
+@app.middleware("http")
+async def sem_cache_em_json(request: Request, call_next):
+    """Respostas da API são por usuário: impede que o navegador reaproveite uma resposta
+    de outra sessão (o cache HTTP não considera o header Authorization)."""
+    response = await call_next(request)
+    if response.headers.get("content-type", "").startswith("application/json"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
 
 app.include_router(auth_router)
 app.include_router(item_router)
