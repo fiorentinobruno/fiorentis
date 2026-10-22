@@ -591,12 +591,30 @@ async function renderSemana(disciplinas) {
   }
 }
 
+function mostrarErroCarregamento(detalhe) {
+  gradeVaziaEl.classList.remove("hidden");
+  gradeVaziaEl.textContent = `Não foi possível carregar as disciplinas (${detalhe}).`;
+}
+
 async function carregarTudo() {
-  const resp = await fetch("/disciplinas");
-  const disciplinas = await resp.json();
-  renderGrade(disciplinas);
-  await renderListaDisciplinas(disciplinas);
-  await renderSemana(disciplinas);
+  try {
+    const resp = await fetch("/disciplinas");
+    const corpo = await resp.text();
+    let disciplinas;
+    try {
+      disciplinas = JSON.parse(corpo);
+    } catch {
+      return mostrarErroCarregamento(`HTTP ${resp.status}: ${corpo.slice(0, 80)}`);
+    }
+    if (!resp.ok || !Array.isArray(disciplinas)) {
+      return mostrarErroCarregamento(`HTTP ${resp.status}: ${corpo.slice(0, 80)}`);
+    }
+    renderGrade(disciplinas);
+    await renderListaDisciplinas(disciplinas);
+    await renderSemana(disciplinas);
+  } catch (erro) {
+    mostrarErroCarregamento(`erro: ${erro && erro.message ? erro.message : erro}`);
+  }
 }
 
 setupCaptura(carregarTudo, mostrarToast);
